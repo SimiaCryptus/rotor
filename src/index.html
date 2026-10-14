@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none';">
+           content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://api.openai.com https://api.anthropic.com http://localhost:* http://127.0.0.1:*; form-action 'none'; base-uri 'none';">
     <title>Rotor</title>
     <style>/*@rotor:css*/</style>
 </head>
@@ -24,6 +24,7 @@
         <button id="redo" title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo">↷</button>
     </div>
     <button id="dimAdd">+ dimension</button>
+     <button id="aiBtn" title="Agents — bring your own key (Ctrl/Cmd+J)">✦ agents</button>
     <span class="spacer"></span>
     <input id="search" placeholder="Search" aria-label="Search">
     <div class="group">
@@ -53,6 +54,9 @@
         <input id="palIn" placeholder="Type a command — e.g. rows topic, filter status open, save" aria-label="Command">
         <ul id="palList" role="listbox"></ul>
     </div>
+</div>
+<div id="agents" role="dialog" aria-label="Agents" aria-modal="true">
+     <div class="box" id="agentsBox"></div>
 </div>
 <script type="application/json" id="rotor-data"></script>
 <script>/*@rotor:js*/</script>

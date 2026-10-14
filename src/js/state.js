@@ -15,6 +15,8 @@ export const state = {
     lastProj: null,
     cellMax: 0,
     capLifted: false,
+     // last focused cell {r, c}, used as agent scope
+     agentCell: null,
 };
 
 export const activeView = () =>

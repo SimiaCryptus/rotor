@@ -11,6 +11,7 @@ import {render} from "./render.js";
 import {renderGrid} from "./grid.js";
 import {announce} from "./status.js";
 import {addDim, newView} from "./actions.js";
+import {openAgents} from "./agents-panel.js";
 
 export function deleteActiveView() {
     const doc = state.doc;
@@ -37,6 +38,7 @@ export function initToolbar() {
     $("#undo").onclick = () => undo();
     $("#redo").onclick = () => redo();
     $("#dimAdd").onclick = () => addDim(prompt("Dimension name (e.g. Person)"));
+     $("#aiBtn").onclick = () => openAgents();
     $("#docTitle").ondblclick = () => {
         const n = prompt("Notebook title", state.doc.title);
         if (n) commit(D => D.title = n);

@@ -9,6 +9,7 @@ import {saveHTML} from "../io.js";
 import {renderGrid} from "./grid.js";
 import {announce, status} from "./status.js";
 import {addDim, newView, moveDim, deleteDim, setKind} from "./actions.js";
+import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 
 const findDim = s => {
     s = (s || "").trim().toLowerCase();
@@ -95,6 +96,18 @@ const COMMANDS = [
             announce("Persistent storage not supported here.");
         }
     }],
+     ["ai synthesize", "Synthesizer — merge notes in the focused cell or view", () => openAgents("synthesizer")],
+     ["ai classify", "ai classify <dim> — assign values on a dimension", a => {
+         const d = findDim(a);
+         openAgents("classifier", d ? "unassigned" : "", d ? {dim: d.id} : {});
+     }],
+     ["ai plan", "ai plan \"goal\" — build a plan you can rotate onto", a => openAgents("planner", "", {goal: (a || "").replace(/^"|"$/g, "")})],
+     ["ai critique", "Critic — find contradictions in the view", () => openAgents("critic")],
+     ["ai expand", "Expander — elaborate the selected note", () => openAgents("expander", "note")],
+     ["ai reduce", "Reducer — tighten a note or condense a cell", () => openAgents("reducer")],
+     ["ai map", "Mapper — propose a new dimension by meaning", () => openAgents("mapper")],
+     ["ai settings", "Agent provider, model and key", () => openAgentSettings()],
+     ["ai log", "Agent run log (metadata only)", () => openAgentLog()],
 ];
 
 let palSel = 0, palPrev = null;

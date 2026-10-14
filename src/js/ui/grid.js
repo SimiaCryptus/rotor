@@ -4,6 +4,7 @@ import {state, activeView} from "../state.js";
 import {dimOf, isDate, valLabel, coordsOf} from "../model/doc.js";
 import {project, cellAddress} from "../model/project.js";
 import {renderMarkdown} from "../model/markdown.js";
+import {AGENTS} from "../ai/agents.js";
 import {setView} from "../nav.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
@@ -160,6 +161,8 @@ function cellEl(v, r, c, placements, ri, ci) {
         class: "cell", role: "gridcell", tabindex: ri === 0 && ci === 0 ? "0" : "-1",
         "data-r": ri, "data-c": ci
     });
+     td.addEventListener("focusin", () => state.agentCell = {r, c});
+     td.addEventListener("click", () => state.agentCell = {r, c});
     td.addEventListener("keydown", e => {
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (e.key === "Enter" && e.target === td) {
@@ -221,6 +224,10 @@ function cellEl(v, r, c, placements, ri, ci) {
             const txt = "Echo — also in " + where;
             card.append(h("span", {class: "mk", title: txt, "aria-label": txt}, "↺"));
         }
+         if (item.provenance && !item.provenance.edited) {
+             const txt = "drafted by " + (AGENTS[item.provenance.agent]?.name || item.provenance.agent);
+             card.append(h("span", {class: "prov", title: txt, "aria-label": txt}, "✦"));
+         }
         card.addEventListener("click", () => {
             state.selectedId = item.id;
             render();

@@ -7,6 +7,8 @@ import {commit} from "../store.js";
 import {render} from "./render.js";
 import {headerLabel} from "./grid.js";
 import {addValue, deleteItem} from "./actions.js";
+import {openAgents} from "./agents-panel.js";
+import {AGENTS} from "../ai/agents.js";
 
 export function renderEditor() {
     const doc = state.doc;
@@ -24,6 +26,7 @@ export function renderEditor() {
         const x = D.items.find(y => y.id === it.id);
         x.content = ta.value;
         x.modified = now();
+         if (x.provenance && !x.provenance.edited) x.provenance.edited = true;
     }, {coalesceKey: "edit:" + it.id}));
     const dims = doc.dimensions.map(d => d.kind === "date"
         ? h("div", {class: "dimrow"}, h("b", {}, d.name + ": "), itemBucket(d, it) || "—",
@@ -62,9 +65,16 @@ export function renderEditor() {
             h("button", {onclick: () => deleteItem(it.id)}, "Delete note")),
         h("p", {}, ta),
         h("div", {class: "preview", html: renderMarkdown(it.content)}),
+         h("div", {class: "ai-strip"}, h("span", {class: "muted"}, "✦ Agents:"),
+             h("button", {onclick: () => openAgents("expander", "note")}, "Expand"),
+             h("button", {onclick: () => openAgents("reducer", "note")}, "Reduce"),
+             h("button", {onclick: () => openAgents("classifier", "note")}, "Classify…")),
         h("h4", {}, "Coordinates"), dims,
         h("h4", {}, "Placements in this view"),
         placements.length ? h("ul", {}, placements)
             : h("p", {class: "muted"}, "Not visible in this view (filtered, searched or unassigned hidden)."),
+         it.provenance ? h("p", {class: "muted"},
+             `✦ Drafted by ${AGENTS[it.provenance.agent]?.name || it.provenance.agent} (${it.provenance.model || "?"})` +
+             (it.provenance.edited ? " · edited since" : "")) : null,
         h("p", {class: "muted"}, `Created ${new Date(it.created).toLocaleString()} · modified ${new Date(it.modified).toLocaleString()}`));
 }

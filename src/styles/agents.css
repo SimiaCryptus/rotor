@@ -1,0 +1,96 @@
+/* ===================== agents panel ===================== */
+#agents {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 7vh;
+    z-index: 55;
+    background: color-mix(in oklab, var(--bg) 45%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px)
+}
+
+#agents.open { display: flex; animation: fade .18s ease-out }
+
+#agentsBox {
+    width: 660px;
+    max-width: 94vw;
+    max-height: 84vh;
+    overflow: auto;
+    padding: 16px 18px;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--line2);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg), var(--glow, none);
+    animation: pop .3s var(--ease)
+}
+
+.ai-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px }
+.ai-head h3 { margin: 0; flex: 1; font-size: 15px; font-weight: 700 }
+.ai-head button { padding: 3px 9px; font-size: 12px }
+
+.ai-row { display: flex; align-items: center; gap: 10px; margin: 8px 0 }
+.ai-row > span { min-width: 90px; color: var(--mut); font-size: 12.5px }
+.ai-row > select, .ai-row > input:not([type="checkbox"]) { flex: 1 }
+
+.ai-preview {
+    margin: 12px 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 12.5px
+}
+
+.ai-warn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: color-mix(in oklab, var(--danger) 10%, transparent)
+}
+
+.ai-prog { font-family: var(--mono); font-size: 12.5px }
+
+.ai-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px }
+
+button.primary, button.primary:hover {
+    background: var(--grad);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 650
+}
+
+button:disabled { opacity: .5; cursor: not-allowed }
+
+#agentsBox h4 {
+    margin: 16px 0 4px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--mut)
+}
+
+.ai-change { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line) }
+.ai-change > input { margin-top: 3px }
+.ai-detail { flex: 1; min-width: 0; font-size: 13px }
+.ai-detail textarea { width: 100%; font-family: var(--mono); font-size: 12px; margin-top: 4px; resize: vertical }
+.ai-diff { white-space: pre-wrap; font-size: 12.5px; margin-bottom: 4px }
+
+ins { background: color-mix(in oklab, #2fe6b7 28%, transparent); text-decoration: underline }
+del { background: color-mix(in oklab, var(--danger) 18%, transparent) }
+
+.ai-log { padding-left: 18px; font-size: 12px }
+.ai-log li { margin: 4px 0 }
+
+.ai-strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px }
+
+.card .prov {
+    position: absolute;
+    right: 7px;
+    bottom: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--acc)
+}

@@ -6,6 +6,7 @@ import {navGo, switchView} from "../nav.js";
 import {saveHTML} from "../io.js";
 import {render} from "./render.js";
 import {palOpen} from "./palette.js";
+import {openAgents} from "./agents-panel.js";
 
 export function initKeyboard() {
     document.addEventListener("keydown", e => {
@@ -28,6 +29,9 @@ export function initKeyboard() {
         } else if (mod && e.key.toLowerCase() === "s") {
             e.preventDefault();
             saveHTML();
+         } else if (mod && e.key.toLowerCase() === "j") {
+             e.preventDefault();
+             openAgents();
         } else if (e.key === "Escape") {
             state.selectedId = null;
             render();

@@ -6,11 +6,13 @@ import {initToolbar} from "./ui/toolbar.js";
 import {initPalette} from "./ui/palette.js";
 import {initKeyboard} from "./ui/keyboard.js";
 import {initLuminous} from "./ui/luminous.js";
+import {initAgents} from "./ui/agents-panel.js";
 import {boot} from "./boot.js";
 
 initStorage();
 initToolbar();
 initPalette();
+initAgents();
 initKeyboard();
 initLuminous();
 boot();
