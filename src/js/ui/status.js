@@ -1,9 +1,23 @@
 import {$} from "../util.js";
 import {state} from "../state.js";
+const DRIVE_LABEL = {
+     saved: "saved to Drive",
+     saving: "saving to Drive…",
+     dirty: "unsaved changes",
+     signin: "⚠ sign-in needed — click Save to Drive",
+     readonly: "read-only in Drive (Save to Drive makes a copy)",
+};
+
 
 export function status(msg) {
     if (msg) return void ($("#status").textContent = msg);
     const doc = state.doc;
+     const D = state.drive;
+     if (D) {
+         const lbl = D.status === "error" ? "⚠ save failed — " + D.error : DRIVE_LABEL[D.status] || "";
+         $("#status").textContent = `Drive: ${D.name} · ${lbl} · rev ${doc.rev}`;
+         return;
+     }
     const unsaved = doc.rev - (doc.savedRev || 0);
     const nudge = unsaved >= 50 ? ` · ⚠ ${unsaved} changes not in a file — Ctrl/Cmd+S to save` : "";
     $("#status").textContent = `rev ${doc.rev} · saved in browser · last file save: ${doc.savedAt ? new Date(doc.savedAt).toLocaleString() : "never"}${nudge}`;

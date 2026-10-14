@@ -3,6 +3,7 @@ import {state} from "../state.js";
 import {renderShelves} from "./shelves.js";
 import {renderGrid} from "./grid.js";
 import {renderEditor} from "./editor.js";
+import {updateSaveButton} from "./toolbar.js";
 import {status} from "./status.js";
 
 export function render() {
@@ -14,6 +15,7 @@ export function render() {
     renderShelves();
     renderGrid();
     renderEditor();
+    updateSaveButton();
     status();
     if (state.pendingFocus) {
         const c = document.querySelector(`.card[data-id="${CSS.escape(state.pendingFocus)}"]`);

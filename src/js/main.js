@@ -8,6 +8,8 @@ import {initKeyboard} from "./ui/keyboard.js";
 import {initLuminous} from "./ui/luminous.js";
 import {initAgents} from "./ui/agents-panel.js";
 import {boot} from "./boot.js";
+import {initDrive} from "./drive/index.js";
+import {initPwa} from "./pwa.js";
 
 initStorage();
 initToolbar();
@@ -16,3 +18,5 @@ initAgents();
 initKeyboard();
 initLuminous();
 boot();
+initDrive();
+initPwa();

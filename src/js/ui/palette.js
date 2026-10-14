@@ -5,12 +5,16 @@ import {valueObjs} from "../model/doc.js";
 import {undo, redo, restoreSnapshot} from "../store.js";
 import {snapshot} from "../storage.js";
 import {setView, navGo} from "../nav.js";
-import {saveHTML} from "../io.js";
+import {saveHTML, saveRotor} from "../io.js";
+import {isInstalled} from "../pwa.js";
 import {renderGrid} from "./grid.js";
 import {announce, status} from "./status.js";
 import {addDim, newView, moveDim, deleteDim, setKind} from "./actions.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
+import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive} from "../drive/index.js";
+const driveCmd = fn => driveAvailable() ? fn()
+     : announce("Google Drive is available in the Drive build (dist/drive) served over HTTPS.");
 
 const findDim = s => {
     s = (s || "").trim().toLowerCase();
@@ -74,7 +78,13 @@ const COMMANDS = [
     ["forward", "Next view state (Alt+→)", () => navGo(1)],
     ["undo", "Undo", () => undo()],
     ["redo", "Redo", () => redo()],
-    ["save", "Save as self-contained HTML", () => saveHTML()],
+    ["save", "Save notebook", () => isInstalled() ? saveRotor() : saveHTML()],
+    ["save rotor", "Save as .rotor notebook", () => saveRotor()],
+    ["save html", "Save as self-contained HTML", () => saveHTML()],
+     ["drive open", "Open a notebook from Google Drive", () => driveCmd(openFromDrive)],
+     ["drive save", "Save to Google Drive (creates a file if needed)", () => driveCmd(() => saveToDrive({manual: true}))],
+     ["drive new", "Create a new empty notebook in Google Drive", () => driveCmd(() => createInDrive(null, {fresh: true}))],
+     ["drive signout", "Forget the Google Drive access token", () => driveCmd(signOutDrive)],
     ["export json", "Download rotor.json", () => $("#export").click()],
     ["import", "Import a rotor.json file", () => $("#import").click()],
     ["empty", "Toggle showing empty rows/columns", () => setView(w => w.options.showEmpty = !w.options.showEmpty)],

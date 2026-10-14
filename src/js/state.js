@@ -6,6 +6,10 @@ export const state = {
     selectedId: null,
     searchTerm: "",
     lastSaveFile: null,
+    lastRotorFile: null,
+    isInstalledPwa: false,
+     // Google Drive link for the open notebook (Drive build only), never persisted
+     drive: null,
     // view navigation (§9.3)
     navBack: [],
     navFwd: [],

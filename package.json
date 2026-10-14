@@ -7,7 +7,8 @@
   "scripts": {
     "build": "node build.mjs",
     "build:debug": "node build.mjs --no-minify",
-    "dev": "node build.mjs --watch"
+     "dev": "node build.mjs --watch",
+     "serve:drive": "npx --yes http-server dist/drive -p 8080 -c-1"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"

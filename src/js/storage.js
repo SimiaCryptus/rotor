@@ -48,10 +48,14 @@ export function requestPersist() {
 }
 
 let persistTimer;
+const persistListeners = new Set();
+// Called synchronously on every document/view change (used by the Drive autosave).
+export const onPersist = fn => persistListeners.add(fn);
 
 export function persist() {
     clearTimeout(persistTimer);
     persistTimer = setTimeout(flush, 400);
+     for (const fn of persistListeners) fn();
 }
 
 export function flush() {

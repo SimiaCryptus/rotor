@@ -1,0 +1,48 @@
+{
+  "name": "Rotor",
+  "short_name": "Rotor",
+  "description": "A rotatable notebook where notes live in a multidimensional cube",
+  "id": "https://math.cognotik.com/experiments/rotor/dist/rotor.html",
+  "start_url": "https://math.cognotik.com/experiments/rotor/dist/rotor.html",
+  "scope": "https://math.cognotik.com/experiments/rotor/dist/",
+  "display": "standalone",
+  "background_color": "#06070e",
+  "theme_color": "#6a5cff",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "https://math.cognotik.com/experiments/rotor/dist/rotor.html",
+      "name": "Rotor notebook",
+      "accept": {
+        "application/vnd.rotor+json": [".rotor"]
+      },
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
+}

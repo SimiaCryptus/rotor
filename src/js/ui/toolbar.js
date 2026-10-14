@@ -6,7 +6,8 @@ import {parseCapture} from "../model/capture.js";
 import {commit, undo, redo, replaceDoc} from "../store.js";
 import {flush, persist} from "../storage.js";
 import {setView, switchView, resetNav} from "../nav.js";
-import {saveHTML, exportJSON, importFile} from "../io.js";
+import {saveHTML, saveRotor, exportJSON, importFile} from "../io.js";
+import {isInstalled} from "../pwa.js";
 import {render} from "./render.js";
 import {renderGrid} from "./grid.js";
 import {announce} from "./status.js";
@@ -22,6 +23,18 @@ export function deleteActiveView() {
     persist();
     render();
 }
+export function updateSaveButton() {
+    const btn = $("#save");
+    if (!btn) return;
+    if (isInstalled()) {
+        btn.textContent = "Save .rotor";
+        btn.title = "Save .rotor (Ctrl/Cmd+S)";
+    } else {
+        btn.textContent = "Save HTML";
+        btn.title = "Save HTML (Ctrl/Cmd+S)";
+    }
+}
+
 
 export function initToolbar() {
     $("#viewSel").onchange = e => switchView(e.target.value);
@@ -47,7 +60,11 @@ export function initToolbar() {
         state.searchTerm = e.target.value;
         renderGrid();
     };
-    $("#save").onclick = () => saveHTML();
+    $("#save").onclick = () => {
+        if (isInstalled()) saveRotor();
+        else saveHTML();
+    };
+    updateSaveButton();
     $("#export").onclick = exportJSON;
     $("#import").onclick = () => $("#importFile").click();
     $("#importFile").onchange = async e => {

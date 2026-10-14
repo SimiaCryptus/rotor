@@ -3,7 +3,7 @@ import {$} from "../util.js";
 import {state} from "../state.js";
 import {undo, redo} from "../store.js";
 import {navGo, switchView} from "../nav.js";
-import {saveHTML} from "../io.js";
+import {saveAny} from "../drive/index.js";
 import {render} from "./render.js";
 import {palOpen} from "./palette.js";
 import {openAgents} from "./agents-panel.js";
@@ -28,7 +28,7 @@ export function initKeyboard() {
             $("#transpose").click();
         } else if (mod && e.key.toLowerCase() === "s") {
             e.preventDefault();
-            saveHTML();
+             saveAny();
          } else if (mod && e.key.toLowerCase() === "j") {
              e.preventDefault();
              openAgents();

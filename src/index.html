@@ -3,9 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta http-equiv="Content-Security-Policy"
-           content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://api.openai.com https://api.anthropic.com http://localhost:* http://127.0.0.1:*; form-action 'none'; base-uri 'none';">
+     <meta http-equiv="Content-Security-Policy" content="@rotor:csp">
+    <meta name="theme-color" content="#6a5cff">
     <title>Rotor</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <style>/*@rotor:css*/</style>
 </head>
 <body>
@@ -27,15 +30,23 @@
      <button id="aiBtn" title="Agents — bring your own key (Ctrl/Cmd+J)">✦ agents</button>
     <span class="spacer"></span>
     <input id="search" placeholder="Search" aria-label="Search">
+     <div class="group" id="driveGroup" hidden>
+         <button id="driveOpen" title="Open a notebook from Google Drive">Open from Drive</button>
+         <button id="driveSave" title="Save to Google Drive (Ctrl/Cmd+S)">Save to Drive</button>
+     </div>
     <div class="group">
         <button id="export">Export JSON</button>
         <button id="import">Import</button>
         <button id="empty">Start empty</button>
     </div>
     <button id="save" title="Ctrl/Cmd+S">Save HTML</button>
-    <input id="importFile" type="file" accept=".json,application/json" hidden>
+    <input id="importFile" type="file" accept=".rotor,.json,application/json,application/vnd.rotor+json" hidden>
 </header>
 <div class="shelves" id="shelves"></div>
+<div id="driveBanner" class="drive-banner" role="status" hidden>
+     <span id="driveMsg"></span>
+     <button id="driveConnect" class="primary" type="button">Connect Google Drive</button>
+</div>
 <main>
     <div id="gridwrap">
         <table id="grid" role="grid"></table>

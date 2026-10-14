@@ -8,6 +8,23 @@ import {announce} from "./status.js";
 import {
     ITER, LOCKED, cryptoAvailable, newSalt, deriveKey, deriveKeyFor, encryptWith, decryptWith
 } from "../cipher.js";
+const CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function calcEntropy(p) {
+     if (!p) return {bits: 0, pool: 0, label: "None", color: "var(--mut)"};
+     let pool = 0;
+     if (/[a-z]/.test(p)) pool += 26;
+     if (/[A-Z]/.test(p)) pool += 26;
+     if (/[0-9]/.test(p)) pool += 10;
+     if (/[^a-zA-Z0-9]/.test(p)) pool += 33;
+     const bits = pool > 0 ? Math.round(p.length * Math.log2(pool)) : 0;
+     let label = "Very weak", color = "var(--danger)";
+     if (bits >= 80) { label = "Very strong"; color = "#2fe6b7"; }
+     else if (bits >= 60) { label = "Strong"; color = "var(--acc2)"; }
+     else if (bits >= 36) { label = "Fair"; color = "var(--acc)"; }
+     else if (bits >= 28) { label = "Weak"; color = "#ffc861"; }
+     return {bits, pool, label, color};
+}
+
 
 const passwords = [];      // [{pw, keys: Map("salt:iter" → Promise<CryptoKey>)}], in insertion order
 const plain = new Map();   // itemId → {ct, text}: decrypted text for this session
@@ -57,7 +74,7 @@ function remember(pw) {
     return e;
 }
 
-export function askPassword({title, confirm: twice = false, hint = "", action = "Unlock"}) {
+export function askPassword({title, confirm: twice = false, hint = "", action = "Unlock", onTest = null}) {
     return new Promise(resolve => {
         const prev = document.activeElement;
         const pw = h("input", {type: "password", autocomplete: "off", "aria-label": "Password"});
@@ -65,7 +82,118 @@ export function askPassword({title, confirm: twice = false, hint = "", action = 
         const err = h("p", {class: "ai-warn", hidden: true});
         const row = (label, el) => h("label", {class: "ai-row"}, h("span", {}, label), el);
         let wrap;
+         let bruteRunning = false, bruteStop = false;
+         const okBtn = h("button", {type: "button", class: "primary", onclick: () => ok()}, action);
+         const bruteStatus = h("div", {class: "brute-status muted", style: "display:none"});
+         let bruteBtn = null, bruteWrap = null;
+         let entropyBox = null;
+         if (twice) {
+             const bar = h("div", {class: "entropy-bar"});
+             const track = h("div", {class: "entropy-track"}, bar);
+             const lbl = h("span", {class: "entropy-label"}, "Entropy: 0 bits");
+             const qual = h("span", {class: "entropy-quality muted"}, "Enter a password");
+             const text = h("div", {class: "entropy-text"}, lbl, qual);
+             entropyBox = h("div", {class: "entropy-meter"}, track, text);
+             const updateEntropy = () => {
+                 const val = pw.value;
+                 const {bits, label, color, pool} = calcEntropy(val);
+                 const pct = Math.min(100, Math.round((bits / 80) * 100));
+                 bar.style.width = pct + "%";
+                 bar.style.backgroundColor = color;
+                 if (!val) {
+                     lbl.textContent = "Entropy: 0 bits";
+                     qual.textContent = "Enter a password";
+                     qual.style.color = "var(--mut)";
+                 } else {
+                     lbl.textContent = `Entropy: ~${bits} bits`;
+                     qual.textContent = `${label} (${pool} char pool)`;
+                     qual.style.color = color;
+                 }
+             };
+             pw.addEventListener("input", updateEntropy);
+         }
+         async function runBruteForce() {
+             bruteRunning = true;
+             bruteStop = false;
+             bruteBtn.textContent = "⏹ Stop";
+             bruteStatus.style.display = "block";
+             bruteStatus.style.color = "var(--mut)";
+             pw.type = "text";
+             pw.readOnly = true;
+             okBtn.disabled = true;
+             err.hidden = true;
+             let len = 1;
+             let indices = [0];
+             let attempts = 0;
+             const startTime = Date.now();
+             try {
+                 while (!bruteStop) {
+                     attempts++;
+                     const candidate = indices.map(i => CHARS[i]).join("");
+                     pw.value = candidate;
+                     const elapsed = Math.max(0.05, (Date.now() - startTime) / 1000);
+                     const rate = (attempts / elapsed).toFixed(1);
+                     bruteStatus.textContent = `Trying: "${candidate}" · length ${len} · #${attempts} (${rate}/s)`;
+                     await new Promise(r => setTimeout(r, 0));
+                     if (bruteStop) break;
+                     let match = false;
+                     try {
+                         match = await onTest(candidate);
+                     } catch {
+                     }
+                     if (match) {
+                         bruteRunning = false;
+                         bruteBtn.textContent = "⚡ Brute force";
+                         bruteStatus.textContent = `✓ Found "${candidate}" in ${attempts} attempts (${elapsed.toFixed(1)}s)!`;
+                         bruteStatus.style.color = "#2fe6b7";
+                         await new Promise(r => setTimeout(r, 400));
+                         done(candidate);
+                         return;
+                     }
+                     let pos = len - 1;
+                     while (pos >= 0) {
+                         indices[pos]++;
+                         if (indices[pos] < CHARS.length) break;
+                         indices[pos] = 0;
+                         pos--;
+                     }
+                     if (pos < 0) {
+                         len++;
+                         indices = new Array(len).fill(0);
+                     }
+                 }
+             } finally {
+                 bruteRunning = false;
+                 pw.readOnly = false;
+                 okBtn.disabled = false;
+                 if (bruteBtn) bruteBtn.textContent = "⚡ Brute force";
+                 if (bruteStop && !pw.value) {
+                     bruteStatus.style.display = "none";
+                 } else if (bruteStop) {
+                     bruteStatus.textContent = `Stopped at attempt #${attempts} ("${pw.value}").`;
+                 }
+             }
+         }
+         if (!twice && onTest) {
+             bruteBtn = h("button", {
+                 type: "button",
+                 class: "brute-btn",
+                 onclick: () => {
+                     if (bruteRunning) bruteStop = true;
+                     else runBruteForce();
+                 }
+             }, "⚡ Brute force");
+             bruteWrap = h("div", {class: "brute-wrap"},
+                 h("div", {class: "brute-row"},
+                     bruteBtn,
+                     h("span", {class: "muted"}, "Test all alphanumeric strings (naive, sequential)")
+                 ),
+                 bruteStatus
+             );
+         }
+
         const done = v => {
+             bruteStop = true;
             wrap.remove();
             prev?.focus?.();
             resolve(v);
@@ -83,16 +211,24 @@ export function askPassword({title, confirm: twice = false, hint = "", action = 
             h("div", {class: "box"},
                 h("h3", {}, title),
                 hint ? h("p", {class: "muted"}, hint) : null,
-                row("Password", pw), twice ? row("Repeat", pw2) : null, err,
+                 row("Password", pw),
+                 twice ? entropyBox : null,
+                 twice ? row("Repeat", pw2) : null,
+                 !twice && onTest ? bruteWrap : null,
+                 err,
                 h("div", {class: "ai-actions"},
                     h("button", {type: "button", onclick: () => done(null)}, "Cancel"),
-                    h("button", {type: "button", class: "primary", onclick: ok}, action))));
+                     okBtn)));
         wrap.addEventListener("keydown", e => {
             e.stopPropagation();
             if (e.key === "Escape") {
                 e.preventDefault();
-                done(null);
-            } else if (e.key === "Enter") {
+                 if (bruteRunning) {
+                     bruteStop = true;
+                 } else {
+                     done(null);
+                 }
+             } else if (e.key === "Enter" && !bruteRunning) {
                 e.preventDefault();
                 ok();
             }
@@ -113,7 +249,11 @@ export async function unlock(id) {
     if (t == null) {
         const pw = await askPassword({
             title: "Unlock encrypted note",
-            hint: "The password is kept in memory for this session only, and reused for other notes."
+             hint: "The password is kept in memory for this session only, and reused for other notes.",
+             onTest: async candidate => {
+                 const entry = {pw: candidate, keys: new Map()};
+                 return (await tryDecrypt(it.enc, [entry])) != null;
+             }
         });
         if (!pw) return;
         const entry = {pw, keys: new Map()};
@@ -137,7 +277,18 @@ export async function unlockPrompt() {
     if (isLocked(sel)) return unlock(sel.id);
     if (!state.doc.items.some(isLocked)) return announce("No locked notes.");
     if (!cryptoAvailable()) return announce("Encryption is not available in this browser context.");
-    const pw = await askPassword({title: "Unlock encrypted notes", hint: "Kept in memory for this session only."});
+     const locked = state.doc.items.filter(isLocked);
+     const pw = await askPassword({
+         title: "Unlock encrypted notes",
+         hint: "Kept in memory for this session only.",
+         onTest: async candidate => {
+             const entry = {pw: candidate, keys: new Map()};
+             for (const item of locked) {
+                 if ((await tryDecrypt(item.enc, [entry])) != null) return true;
+             }
+             return false;
+         }
+     });
     if (!pw) return;
     const entry = {pw, keys: new Map()};
     const n = await unlockAll([entry]);
@@ -230,10 +381,18 @@ export async function decryptItems(ids) {
      if (!items.length) return announce("No encrypted notes here.");
      await unlockAll();
      if (items.some(isLocked)) {
-         const n = items.filter(isLocked).length;
+          const locked = items.filter(isLocked);
+          const n = locked.length;
          const pw = await askPassword({
              title: `Decrypt ${n} locked note${n === 1 ? "" : "s"}`, action: "Decrypt",
-             hint: "Kept in memory for this session only."
+              hint: "Kept in memory for this session only.",
+              onTest: async candidate => {
+                  const entry = {pw: candidate, keys: new Map()};
+                  for (const item of locked) {
+                      if ((await tryDecrypt(item.enc, [entry])) != null) return true;
+                  }
+                  return false;
+              }
          });
          if (pw) {
              const entry = {pw, keys: new Map()};
