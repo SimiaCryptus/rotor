@@ -5,11 +5,14 @@ import {dimOf, isDate, valLabel, coordsOf} from "../model/doc.js";
 import {project, cellAddress} from "../model/project.js";
 import {renderMarkdown} from "../model/markdown.js";
 import {AGENTS} from "../ai/agents.js";
+import {LOCKED} from "../cipher.js";
+import {plaintextOf, isLocked, unlock, encryptItems, decryptItems} from "./locks.js";
 import {setView} from "../nav.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
+import {openMenu} from "./contextmenu.js";
 import {
-    addValue, renameValue, deleteValue, moveValue, assignValue,
+     addValue, renameValue, deleteValue, moveValue, assignValue, mergeValue,
     createIn, moveItem, removeFromCell, deleteItem
 } from "./actions.js";
 
@@ -18,21 +21,50 @@ const RENDER_CAP = 2000;
 export function headerLabel(dims, tuple) {
     return tuple.map((v, i) => valLabel(state.doc, dims[i], v)).join(" › ") || "(all)";
 }
+const notes = n => n + " note" + (n === 1 ? "" : "s");
+// Notes visible under a row/column header in the current projection.
+function headerNoteIds(isRow, tuple) {
+     const p = state.lastProj;
+     if (!p) return [];
+     const pl = isRow ? p.colKeys.flatMap(c => p.cell(tuple, c)) : p.rowKeys.flatMap(r => p.cell(r, tuple));
+     return [...new Set(pl.map(x => x.item.id))];
+}
+function headerMenu(e, isRow, dims, tuple) {
+     const doc = state.doc, last = dims.length - 1;
+     const did = last >= 0 ? dims[last] : null, vid = last >= 0 ? tuple[last] : null;
+     const editable = did != null && vid != null && !isDate(doc, did);
+     const ids = headerNoteIds(isRow, tuple), set = new Set(ids);
+     const items = doc.items.filter(i => set.has(i.id));
+     const plainN = items.filter(i => !i.enc).length, encN = items.length - plainN;
+     const label = headerLabel(dims, tuple);
+     const val = editable ? valLabel(doc, did, vid) : "";
+     const others = editable ? dimOf(doc, did).values.filter(v => v.id !== vid) : [];
+     openMenu(e, [
+         editable && {label: "Rename…", action: () => renameValue(did, vid)},
+         editable && {
+             label: "Merge with…", disabled: !others.length, subtitle: `Merge “${val}” into`,
+             hint: `Move every note from “${val}” into another ${dimOf(doc, did).name} value`,
+             submenu: () => others.map(v => ({label: v.label, action: () => mergeValue(did, vid, v.id)}))
+         },
+         editable && "-",
+         {label: `Encrypt ${notes(plainN)}…`, disabled: !plainN, action: () => encryptItems(ids)},
+         {label: `Decrypt ${notes(encN)}…`, disabled: !encN, action: () => decryptItems(ids)},
+         editable && "-",
+         editable && {label: "Delete value…", danger: true, action: () => deleteValue(did, vid)},
+     ], label);
+}
+
 
 function headerCell(cls, dims, tuple, count) {
     const last = dims.length - 1;
     const th = h("th", {
             class: cls,
             scope: cls === "rh" ? "row" : "col",
-            title: "Double-click to rename · right-click to delete · drop a note to assign",
+             title: "Double-click to rename · right-click for options · drop a note to assign",
             "aria-label": `${headerLabel(dims, tuple)}, ${count} items`,
+             "aria-haspopup": "menu",
             ondblclick: () => last >= 0 && renameValue(dims[last], tuple[last]),
-            oncontextmenu: e => {
-                if (last >= 0) {
-                    e.preventDefault();
-                    deleteValue(dims[last], tuple[last]);
-                }
-            }
+             oncontextmenu: e => headerMenu(e, cls === "rh", dims, tuple)
         },
         headerLabel(dims, tuple), " ", h("span", {class: "n"}, String(count)));
     // Drop item onto header: assign that value, keep other coordinates (§7)
@@ -209,14 +241,25 @@ function cellEl(v, r, c, placements, ri, ci) {
         return td;
     }
     for (const {item, primary} of placements) {
+         const locked = isLocked(item);
+         const text = item.enc ? (plaintextOf(item) ?? LOCKED) : item.content;
         const attrs = {
-            class: "card" + (primary ? "" : " echo") + (mode === "list" ? " list" : "") + (item.id === state.selectedId ? " sel" : ""),
+             class: "card" + (primary ? "" : " echo") + (mode === "list" ? " list" : "") + (item.id === state.selectedId ? " sel" : "")
+                 + (item.enc ? (locked ? " locked" : " unlocked") : ""),
             draggable: "true", tabindex: "0", "data-id": item.id
         };
-        if (mode !== "list") attrs.html = renderMarkdown(item.content || "*(empty)*");
+         if (mode !== "list") attrs.html = renderMarkdown(text || "*(empty)*");
         const card = h("div", attrs);
         if (mode === "list") card.textContent =
-            (item.content || "").split("\n").find(l => l.trim())?.replace(/^#+\s*/, "") || "(empty)";
+             (text || "").split("\n").find(l => l.trim())?.replace(/^#+\s*/, "") || "(empty)";
+         if (item.enc && !locked) card.prepend(h("span", {
+             class: "lockmk", title: "Encrypted · decrypted for this session",
+             "aria-label": "Encrypted, decrypted for this session"
+         }, "🔓"));
+         if (locked) card.addEventListener("dblclick", e => {
+             e.stopPropagation();
+             unlock(item.id);
+         });
         if (!primary) {
             const where = [...v.rows, ...v.cols].filter(d => coordsOf(doc, item, d).length > 1)
                 .map(d => dimOf(doc, d).name + ": " + coordsOf(doc, item, d).map(x => valLabel(doc, d, x)).join(", "))

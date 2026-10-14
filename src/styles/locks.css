@@ -1,0 +1,39 @@
+/* ===================== encrypted notes ===================== */
+.pwd {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 14vh;
+    z-index: 60;
+    background: color-mix(in oklab, var(--bg) 45%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    animation: fade .18s ease-out
+}
+
+.pwd .box {
+    width: 440px;
+    max-width: 92vw;
+    padding: 16px 18px;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--line2);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg), var(--glow, none);
+    animation: pop .3s var(--ease)
+}
+
+.pwd h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700 }
+
+.card.locked { color: var(--mut); font-style: italic }
+
+.card .lockmk {
+    float: right;
+    margin-left: 6px;
+    font-size: 11px
+}
+
+.preview.locked { color: var(--mut); font-style: italic }

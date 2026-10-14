@@ -81,6 +81,79 @@ export function deleteDim(id) {
     resetNav();
     announce("Dimension deleted. Ctrl/Cmd+Z to undo.");
 }
+export function renameDim(id) {
+     const d = dimOf(state.doc, id);
+     if (!d) return;
+     const n = prompt("Rename dimension", d.name)?.trim();
+     if (!n || n === d.name) return;
+     if (state.doc.dimensions.some(x => x.id !== id && x.name.toLowerCase() === n.toLowerCase())) return alert("Name in use");
+     commit(D => dimOf(D, id).name = n);
+}
+// Merge value vid into targetVid on the same dimension: notes move, vid is removed.
+export function mergeValue(did, vid, targetVid) {
+     if (vid == null || vid === targetVid || isDate(state.doc, did)) return;
+     const d = dimOf(state.doc, did);
+     const src = d.values.find(v => v.id === vid), tgt = d.values.find(v => v.id === targetVid);
+     if (!src || !tgt) return;
+     const n = state.doc.items.filter(i => (i.coords[did] || []).includes(vid)).length;
+     if (!confirm(`Merge “${src.label}” into “${tgt.label}”? ${n} note${n === 1 ? "" : "s"} move to “${tgt.label}” and “${src.label}” is removed.`)) return;
+     commit(D => {
+         const dd = dimOf(D, did);
+         dd.values = dd.values.filter(v => v.id !== vid);
+         for (const it of D.items) {
+             const s = it.coords[did];
+             if (!s?.includes(vid)) continue;
+             it.coords[did] = [...new Set(s.map(x => x === vid ? targetVid : x))];
+             it.modified = now();
+         }
+         for (const w of D.views) if (w.pages[did]?.includes(vid))
+             w.pages[did] = [...new Set(w.pages[did].map(x => x === vid ? targetVid : x))];
+     });
+     announce(`Merged “${src.label}” into “${tgt.label}”. Ctrl/Cmd+Z to undo.`);
+}
+// Merge dimension id into targetId: values joined by label, coordinates carried over, id removed.
+export function mergeDim(id, targetId) {
+     const s = dimOf(state.doc, id), t = dimOf(state.doc, targetId);
+     if (!s || !t || id === targetId) return;
+     if (s.kind === "date" || t.kind === "date") return announce("Date dimensions can't be merged.");
+     if (!confirm(`Merge dimension “${s.name}” into “${t.name}”? Its values join “${t.name}” (same labels are combined) and “${s.name}” is removed.`)) return;
+     commit(D => {
+         const sd = dimOf(D, id), td = dimOf(D, targetId), map = new Map();
+         for (const v of sd.values) {
+             const ex = td.values.find(x => x.label.toLowerCase() === v.label.toLowerCase());
+             if (ex) map.set(v.id, ex.id);
+             else {
+                 const nv = {id: uid("v"), label: v.label};
+                 td.values.push(nv);
+                 map.set(v.id, nv.id);
+             }
+         }
+         for (const it of D.items) {
+             const sv = it.coords[id];
+             if (!sv) continue;
+             const tv = [...(it.coords[targetId] || [])];
+             for (const v of sv) {
+                 const m = map.get(v);
+                 if (m && !tv.includes(m)) tv.push(m);
+             }
+             if (tv.length) it.coords[targetId] = tv;
+             delete it.coords[id];
+             it.modified = now();
+         }
+         D.dimensions = D.dimensions.filter(x => x.id !== id);
+         for (const w of D.views) {
+             const has = w.rows.includes(targetId) || w.cols.includes(targetId) || targetId in w.pages;
+             const rep = a => a.map(x => x === id ? (has ? null : targetId) : x).filter(Boolean);
+             w.rows = rep(w.rows);
+             w.cols = rep(w.cols);
+             if (w.pages[id] && !has) w.pages[targetId] = [...new Set(w.pages[id].map(v => map.get(v)).filter(Boolean))];
+             delete w.pages[id];
+         }
+     });
+     resetNav();
+     announce(`Merged “${s.name}” into “${t.name}”. Ctrl/Cmd+Z to undo.`);
+}
+
 
 export function setKind(id, kind, gran) {
     if (!["categorical", "ordinal", "date"].includes(kind)) return announce("Kind must be categorical, ordinal or date");

@@ -10,6 +10,7 @@ import {renderGrid} from "./grid.js";
 import {announce, status} from "./status.js";
 import {addDim, newView, moveDim, deleteDim, setKind} from "./actions.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
+import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
 
 const findDim = s => {
     s = (s || "").trim().toLowerCase();
@@ -96,6 +97,12 @@ const COMMANDS = [
             announce("Persistent storage not supported here.");
         }
     }],
+     ["encrypt", "encrypt [note|cell|view] — lock note text with a password (asked every time)",
+         a => encryptScope((a || "").trim().toLowerCase())],
+     ["unlock", "Unlock encrypted notes (password kept in memory only)", () => unlockPrompt()],
+     ["lock", "Forget all passwords and re-lock decrypted notes", () => lockAll()],
+     ["decrypt", "Remove encryption from the selected, unlocked note", () =>
+         state.selectedId ? removeEncryption(state.selectedId) : announce("Select a note first.")],
      ["ai synthesize", "Synthesizer — merge notes in the focused cell or view", () => openAgents("synthesizer")],
      ["ai classify", "ai classify <dim> — assign values on a dimension", a => {
          const d = findDim(a);

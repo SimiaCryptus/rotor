@@ -1,11 +1,47 @@
 // Shelves (drag = rotation) and dimension chips.
 import {$, h} from "../util.js";
 import {state, activeView} from "../state.js";
-import {dimOf, valueObjs, valLabel} from "../model/doc.js";
+import {dimOf, valueObjs, valLabel, coordsOf} from "../model/doc.js";
 import {GRANS} from "../model/dates.js";
-import {commit} from "../store.js";
 import {setView} from "../nav.js";
-import {moveDim, deleteDim, setKind} from "./actions.js";
+import {moveDim, deleteDim, setKind, renameDim, mergeDim} from "./actions.js";
+import {encryptItems, decryptItems} from "./locks.js";
+import {openMenu} from "./contextmenu.js";
+
+const notes = n => n + " note" + (n === 1 ? "" : "s");
+
+function chipMenu(e, id) {
+     const doc = state.doc, d = dimOf(doc, id);
+     if (!d) return;
+     const items = doc.items.filter(i => coordsOf(doc, i, id).length), ids = items.map(i => i.id);
+     const plainN = items.filter(i => !i.enc).length, encN = items.length - plainN;
+     const isDateDim = d.kind === "date";
+     const others = isDateDim ? [] : doc.dimensions.filter(x => x.id !== id && x.kind !== "date");
+     openMenu(e, [
+         {label: "Rename…", action: () => renameDim(id)},
+         isDateDim
+             ? {
+                 label: "Granularity…", submenu: () => GRANS.map(g => ({
+                     label: g + (g === (d.granularity || "week") ? " ✓" : ""),
+                     action: () => setKind(id, "date", g)
+                 }))
+             }
+             : {
+                 label: d.kind === "ordinal" ? "Make categorical" : "Make ordinal",
+                 action: () => setKind(id, d.kind === "ordinal" ? "categorical" : "ordinal")
+             },
+         !isDateDim && {
+             label: "Merge with…", disabled: !others.length, subtitle: `Merge “${d.name}” into`,
+             hint: `Fold ${d.name}'s values and assignments into another dimension`,
+             submenu: () => others.map(x => ({label: x.name, action: () => mergeDim(id, x.id)}))
+         },
+         "-",
+         {label: `Encrypt ${notes(plainN)} with a ${d.name}…`, disabled: !plainN, action: () => encryptItems(ids)},
+         {label: `Decrypt ${notes(encN)} with a ${d.name}…`, disabled: !encN, action: () => decryptItems(ids)},
+         "-",
+         {label: "Delete dimension…", danger: true, action: () => deleteDim(id)},
+     ], d.name);
+}
 
 export function renderShelves() {
     const doc = state.doc, v = activeView();
@@ -61,27 +97,20 @@ function chip(id, shelfName) {
     const doc = state.doc, d = dimOf(doc, id), v = activeView();
     const c = h("span", {
         class: "chip", draggable: "true",
+         "aria-haspopup": "menu",
         title: d.kind === "date"
-            ? `date (${d.granularity || "week"} of ${d.source || "created"}) · drag to rotate · double-click to rename · Alt-click to change granularity · right-click to delete`
-            : `${d.kind} · drag to rotate · double-click to rename · Alt-click to toggle ordinal · right-click to delete`
+             ? `date (${d.granularity || "week"} of ${d.source || "created"}) · drag to rotate · double-click to rename · Alt-click to change granularity · right-click for options`
+             : `${d.kind} · drag to rotate · double-click to rename · Alt-click to toggle ordinal · right-click for options`
     });
     c.addEventListener("dragstart", e => e.dataTransfer.setData("text/rotor-dim", id));
-    c.addEventListener("contextmenu", e => {
-        e.preventDefault();
-        deleteDim(id);
-    });
+     c.addEventListener("contextmenu", e => chipMenu(e, id));
     c.addEventListener("click", e => {
         if (!e.altKey) return;
         e.preventDefault();
         if (d.kind === "date") setKind(id, "date", GRANS[(GRANS.indexOf(d.granularity || "week") + 1) % GRANS.length]);
         else setKind(id, d.kind === "ordinal" ? "categorical" : "ordinal");
     });
-    c.addEventListener("dblclick", () => {
-        const n = prompt("Rename dimension", d.name);
-        if (!n || n === d.name) return;
-        if (state.doc.dimensions.some(x => x.id !== id && x.name.toLowerCase() === n.toLowerCase())) return alert("Name in use");
-        commit(D => dimOf(D, id).name = n);
-    });
+     c.addEventListener("dblclick", () => renameDim(id));
     if (shelfName === "Filter") {
         const sel = v.pages[id];
         const menu = h("div", {class: "menu"}, valueObjs(doc, id).map(val => h("label", {},

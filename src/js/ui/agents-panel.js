@@ -63,10 +63,11 @@ const uniq = list => [...new Map(list.map(i => [i.id, i])).values()];
 
 function scopes() {
     const doc = state.doc, v = activeView(), p = state.lastProj, A = AGENTS[P.agent], out = [];
-    const sel = doc.items.find(i => i.id === state.selectedId);
+     // Encrypted notes never leave the machine: they are excluded from every scope.
+     const sel = doc.items.find(i => i.id === state.selectedId && !i.enc);
     if (sel) out.push({id: "note", label: "Selected note: " + firstLine(sel.content).slice(0, 40), items: [sel],
         coords: sharedCoords(doc, [sel]), sourceId: sel.id});
-    const all = p ? uniq(p.rowKeys.flatMap(r => p.colKeys.flatMap(c => p.cell(r, c).map(x => x.item)))) : [];
+     const all = p ? uniq(p.rowKeys.flatMap(r => p.colKeys.flatMap(c => p.cell(r, c).map(x => x.item)))).filter(i => !i.enc) : [];
     const J = JSON.stringify;
     if (p && state.agentCell) {
         const {r, c} = state.agentCell;
@@ -75,7 +76,7 @@ function scopes() {
             for (const [d, val] of Object.entries(cellAddress(v, r, c))) if (val != null && !isDate(doc, d)) coords[d] = [val];
             const lbl = [v.rows.length ? headerLabel(v.rows, r) : null, v.cols.length ? headerLabel(v.cols, c) : null]
                 .filter(Boolean).join(" × ") || "(all)";
-            out.push({id: "cell", label: "Cell " + lbl, items: uniq(p.cell(r, c).map(x => x.item)), coords});
+             out.push({id: "cell", label: "Cell " + lbl, items: uniq(p.cell(r, c).map(x => x.item)).filter(i => !i.enc), coords});
         }
     }
     if (A.needsDim && P.dim) {

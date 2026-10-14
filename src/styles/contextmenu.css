@@ -1,0 +1,63 @@
+/* ===================== context menu ===================== */
+.ctxmenu {
+    position: fixed;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    min-width: 210px;
+    max-width: 320px;
+    max-height: 70vh;
+    overflow: auto;
+    padding: 6px;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid var(--line2);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg), var(--glow, none);
+    animation: pop .18s var(--ease)
+}
+
+.ctxmenu .ctxtitle {
+    padding: 4px 10px 6px;
+    font-size: 10.5px;
+    font-weight: 680;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--mut);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.ctxmenu button {
+    text-align: left;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.ctxmenu button:hover:not(:disabled), .ctxmenu button:focus-visible {
+    border-color: transparent;
+    background: color-mix(in oklab, var(--acc) 12%, transparent);
+    box-shadow: none
+}
+
+.ctxmenu button:active { transform: none }
+
+.ctxmenu button.danger { color: var(--danger) }
+
+.ctxmenu button.danger:hover:not(:disabled), .ctxmenu button.danger:focus-visible {
+    background: color-mix(in oklab, var(--danger) 12%, transparent)
+}
+
+.ctxmenu .ctxsep {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--line2)
+}
