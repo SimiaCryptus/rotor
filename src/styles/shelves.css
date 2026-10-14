@@ -1,0 +1,102 @@
+/* ===================== shelves & chips ===================== */
+.shelf {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 34px;
+    padding: 3px 8px;
+    border: 1px dashed var(--line2);
+    border-radius: 12px;
+    min-width: 130px;
+    background: color-mix(in oklab, var(--fg) 2%, transparent);
+    transition: border-color .2s var(--ease), background-color .2s var(--ease), box-shadow .2s var(--ease)
+}
+
+.shelf.over {
+    border-style: solid;
+    border-color: var(--acc);
+    background: color-mix(in oklab, var(--acc) 10%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 14%, transparent)
+}
+
+.shelf > b {
+    color: var(--mut);
+    font-weight: 650;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    margin-right: 4px
+}
+
+.shelves > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--mut);
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 8px
+}
+
+.shelves > label:hover { color: var(--fg) }
+
+.chip {
+    position: relative;
+    background: linear-gradient(var(--solid), var(--solid)) padding-box, var(--grad) border-box;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 2px 11px;
+    font-size: 12.5px;
+    font-weight: 560;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 4px 14px -6px color-mix(in oklab, var(--acc) 55%, transparent);
+    transition: transform .22s var(--ease), box-shadow .22s var(--ease)
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px -8px color-mix(in oklab, var(--acc) 75%, transparent)
+}
+
+.chip:active { cursor: grabbing }
+
+.chip details { display: inline }
+
+.chip summary {
+    cursor: pointer;
+    list-style: none
+}
+
+.chip summary::-webkit-details-marker { display: none }
+
+.chip .menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 190px;
+    max-height: 320px;
+    overflow: auto;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid var(--line2);
+    padding: 6px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 30;
+    animation: pop .22s var(--ease)
+}
+
+.chip .menu label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-weight: 450;
+    cursor: pointer
+}
+
+.chip .menu label:hover { background: color-mix(in oklab, var(--acc) 10%, transparent) }

@@ -1,0 +1,49 @@
+/* ===================== brand ===================== */
+.logo {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--acc), var(--acc2), var(--acc3), var(--acc));
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .25) inset, 0 6px 18px -4px color-mix(in oklab, var(--acc) 70%, transparent);
+    position: relative;
+    flex: none;
+    animation: spin 12s linear infinite
+}
+
+.logo::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: var(--solid);
+    box-shadow: 0 0 6px rgba(0, 0, 0, .15) inset
+}
+
+.title { font-weight: 650 }
+
+.brand {
+    font-size: 15.5px;
+    font-weight: 780;
+    letter-spacing: -.03em;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent
+}
+
+.sep {
+    color: var(--mut);
+    opacity: .45;
+    font-weight: 300;
+    font-size: 16px
+}
+
+#docTitle {
+    padding: 2px 8px;
+    margin-right: 6px;
+    border-radius: 8px;
+    cursor: text;
+    transition: background .2s var(--ease)
+}
+
+#docTitle:hover { background: color-mix(in oklab, var(--fg) 6%, transparent) }

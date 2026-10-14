@@ -3,7 +3,7 @@
     "title": "Rotor",
     "pitch": "A single-file notebook where notes live in a multi-dimensional space, and you rotate which two dimensions you look at.",
     "category": "lab",
-    "href": "rotor.html",
+    "href": "dist/rotor.html",
     "readme": "README.md",
     "order": 12,
     "icon": "RO"

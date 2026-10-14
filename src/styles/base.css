@@ -1,0 +1,79 @@
+/* ===================== canvas ===================== */
+* {
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--fg) 20%, transparent) transparent
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px }
+::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--fg) 18%, transparent);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 99px
+}
+::-webkit-scrollbar-thumb:hover { background-color: color-mix(in oklab, var(--acc) 55%, transparent) }
+::selection { background: color-mix(in oklab, var(--acc) 32%, transparent) }
+
+body {
+    margin: 0;
+    font: 13.5px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Inter, Roboto, sans-serif;
+    letter-spacing: -.006em;
+    background: var(--bg);
+    color: var(--fg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    isolation: isolate;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale
+}
+
+/* drifting aurora */
+body::before {
+    content: "";
+    position: fixed;
+    inset: -20vmax;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(38vmax 38vmax at 14% 18%, color-mix(in oklab, var(--acc) 24%, transparent), transparent 62%),
+        radial-gradient(34vmax 34vmax at 86% 12%, color-mix(in oklab, var(--acc2) 20%, transparent), transparent 62%),
+        radial-gradient(44vmax 44vmax at 72% 92%, color-mix(in oklab, var(--acc3) 15%, transparent), transparent 62%),
+        radial-gradient(30vmax 30vmax at 30% 85%, color-mix(in oklab, var(--acc2) 10%, transparent), transparent 62%);
+    filter: blur(24px);
+    animation: aurora 40s ease-in-out infinite alternate
+}
+
+/* film grain */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: .05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+}
+
+@keyframes aurora {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1) }
+    50% { transform: translate3d(3vmax, -2vmax, 0) rotate(8deg) scale(1.05) }
+    100% { transform: translate3d(-2vmax, 3vmax, 0) rotate(-6deg) scale(.98) }
+}
+
+@keyframes spin { to { transform: rotate(360deg) } }
+@keyframes pop { from { opacity: 0; transform: translateY(-8px) scale(.97) } }
+@keyframes fade { from { opacity: 0 } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(18px) scale(.985) } }
+
+.spacer { flex: 1 }
+.muted { color: var(--mut) }
+
+.sr {
+    position: absolute;
+    left: -9999px
+}

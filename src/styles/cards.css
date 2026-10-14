@@ -1,0 +1,125 @@
+/* ===================== cards & rendered content ===================== */
+.card {
+    background: var(--solid);
+    border: 1px solid var(--line2);
+    border-radius: 11px;
+    padding: 7px 11px 7px 13px;
+    margin: 6px 0;
+    cursor: pointer;
+    max-height: 6.6em;
+    overflow: hidden;
+    position: relative;
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease)
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--grad);
+    opacity: 0;
+    transition: opacity .25s var(--ease)
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--acc) 35%, var(--line2));
+    box-shadow: var(--shadow-lg)
+}
+
+.card:hover::before { opacity: 1 }
+
+.card.echo {
+    padding-right: 30px;
+    border-style: dashed;
+    background: repeating-linear-gradient(135deg, var(--echo) 0 6px, transparent 6px 12px), var(--solid)
+}
+
+.card.sel {
+    border-style: solid;
+    border-color: transparent;
+    background: linear-gradient(var(--solid), var(--solid)) padding-box, var(--grad) border-box;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 18%, transparent), var(--shadow-lg)
+}
+
+.card.sel::before { opacity: 1 }
+
+.card:focus { outline: none }
+
+.card:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 50%, transparent), var(--shadow-lg)
+}
+
+.card .mk {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--grad);
+    box-shadow: 0 3px 10px -2px color-mix(in oklab, var(--acc) 70%, transparent)
+}
+
+.card p, .card ul, .card pre, .card h4 { margin: 0 }
+.card ul { padding-left: 18px }
+.card h4 { font-size: 13.5px; font-weight: 680; letter-spacing: -.01em }
+.card strong { font-weight: 680 }
+
+.card.list {
+    max-height: 2.2em;
+    padding: 5px 11px 5px 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis
+}
+
+a {
+    color: var(--acc);
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+    opacity: .95
+}
+
+pre {
+    white-space: pre-wrap;
+    font-family: var(--mono);
+    font-size: 12px;
+    background: color-mix(in oklab, var(--fg) 5%, transparent);
+    padding: 8px 10px;
+    border-radius: 8px
+}
+
+code {
+    font-family: var(--mono);
+    font-size: .88em;
+    color: color-mix(in oklab, var(--acc) 72%, var(--fg));
+    background: color-mix(in oklab, var(--acc) 12%, transparent);
+    padding: 1px 5px;
+    border-radius: 5px
+}
+
+pre code { background: none; padding: 0; color: inherit }
+
+.count {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 750;
+    letter-spacing: -.03em;
+    padding: 8px;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+    transition: transform .2s var(--ease)
+}
+
+.count:hover { transform: scale(1.03) }

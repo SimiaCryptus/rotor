@@ -1,0 +1,43 @@
+/* ===================== tokens ===================== */
+:root {
+    --bg: #f4f5fb;
+    --fg: #151a2d;
+    --mut: #697092;
+    --line: rgba(22, 26, 52, .07);
+    --line2: rgba(22, 26, 52, .13);
+    --card: rgba(255, 255, 255, .74);
+    --solid: #ffffff;
+    --glass: rgba(255, 255, 255, .58);
+    --acc: #6a5cff;
+    --acc2: #00b6ff;
+    --acc3: #ff4f9f;
+    --echo: rgba(106, 92, 255, .07);
+    --danger: #e5484d;
+    --shadow: 0 1px 2px rgba(22, 26, 52, .05), 0 4px 14px rgba(22, 26, 52, .06);
+    --shadow-lg: 0 2px 6px rgba(22, 26, 52, .07), 0 20px 50px rgba(22, 26, 52, .13);
+    --grad: linear-gradient(135deg, var(--acc) 0%, var(--acc2) 55%, var(--acc3) 115%);
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #06070e;
+        --fg: #e9ebf8;
+        --mut: #8a90b3;
+        --line: rgba(255, 255, 255, .06);
+        --line2: rgba(255, 255, 255, .12);
+        --card: rgba(21, 24, 42, .7);
+        --solid: #13162a;
+        --glass: rgba(12, 14, 28, .55);
+        --acc: #8f84ff;
+        --acc2: #3dd3ff;
+        --acc3: #ff6fbf;
+        --echo: rgba(143, 132, 255, .1);
+        --danger: #ff6369;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .3);
+        --shadow-lg: 0 2px 8px rgba(0, 0, 0, .5), 0 26px 70px rgba(0, 0, 0, .6);
+        color-scheme: dark;
+    }
+}

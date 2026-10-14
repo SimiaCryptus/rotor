@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none';">
+    <title>Rotor</title>
+    <style>/*@rotor:css*/</style>
+</head>
+<body>
+<header>
+    <span class="logo" aria-hidden="true"></span><span class="title brand">Rotor</span><span class="sep" aria-hidden="true">/</span><span
+        id="docTitle" class="title" title="Double-click to rename"></span>
+    <div class="group">
+        <select id="viewSel" aria-label="View"></select>
+        <button id="viewNew">+ view</button>
+        <button id="viewRen">rename</button>
+        <button id="viewDel">delete</button>
+    </div>
+    <div class="group">
+        <button id="transpose" title="Ctrl/Cmd+T">⇄ transpose</button>
+        <button id="undo" title="Undo (Ctrl/Cmd+Z)" aria-label="Undo">↶</button>
+        <button id="redo" title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo">↷</button>
+    </div>
+    <button id="dimAdd">+ dimension</button>
+    <span class="spacer"></span>
+    <input id="search" placeholder="Search" aria-label="Search">
+    <div class="group">
+        <button id="export">Export JSON</button>
+        <button id="import">Import</button>
+        <button id="empty">Start empty</button>
+    </div>
+    <button id="save" title="Ctrl/Cmd+S">Save HTML</button>
+    <input id="importFile" type="file" accept=".json,application/json" hidden>
+</header>
+<div class="shelves" id="shelves"></div>
+<main>
+    <div id="gridwrap">
+        <table id="grid" role="grid"></table>
+    </div>
+    <aside id="editor" aria-label="Item editor"></aside>
+</main>
+<footer>
+    <input id="capture" placeholder="Quick capture (N) — e.g. Call Bob topic:finance status:open"
+           aria-label="Quick capture">
+    <span class="hint" aria-hidden="true"><kbd>/</kbd> commands · <kbd>N</kbd> capture · <kbd>⌘T</kbd> rotate</span>
+    <span id="status" class="muted"></span>
+</footer>
+<div id="live" class="sr" aria-live="polite"></div>
+<div id="palette" role="dialog" aria-label="Command palette">
+    <div class="box">
+        <input id="palIn" placeholder="Type a command — e.g. rows topic, filter status open, save" aria-label="Command">
+        <ul id="palList" role="listbox"></ul>
+    </div>
+</div>
+<script type="application/json" id="rotor-data"></script>
+<script>/*@rotor:js*/</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "rotor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rotor — a pivot-table notebook compiled to a single self-contained HTML file",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:debug": "node build.mjs --no-minify",
+    "dev": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

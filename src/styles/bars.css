@@ -1,0 +1,38 @@
+/* ===================== bars ===================== */
+header, .shelves, footer {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--glass);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid var(--line);
+    position: relative
+}
+
+header {
+    padding: 10px 16px;
+    z-index: 6
+}
+
+header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--grad);
+    opacity: .45
+}
+
+.shelves { z-index: 5 }
+.shelves > select:first-of-type { margin-left: auto }
+
+footer {
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+    padding: 10px 16px
+}

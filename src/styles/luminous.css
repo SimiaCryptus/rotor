@@ -1,0 +1,314 @@
+/* ================================================================
+   ✦ LUMINOUS LAYER — holographic light, glass and motion
+   Overrides the base layers; must be imported last.
+   ================================================================ */
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false }
+@property --px { syntax: "<length>"; initial-value: -2000px; inherits: false }
+@property --py { syntax: "<length>"; initial-value: -2000px; inherits: false }
+
+:root {
+    --spectrum: var(--acc), var(--acc2), #2fe6b7, #ffc861, var(--acc3), var(--acc);
+    --flow: linear-gradient(90deg, var(--acc) 0%, var(--acc2) 16.66%, var(--acc3) 33.33%, var(--acc) 50%, var(--acc2) 66.66%, var(--acc3) 83.33%, var(--acc) 100%);
+    --edge: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 0 0 1px rgba(255, 255, 255, .18);
+    --glow: 0 0 0 1px color-mix(in oklab, var(--acc) 18%, transparent), 0 18px 48px -18px color-mix(in oklab, var(--acc) 55%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --edge: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 0 0 1px rgba(255, 255, 255, .035);
+        --glow: 0 0 0 1px color-mix(in oklab, var(--acc) 22%, transparent), 0 24px 64px -18px color-mix(in oklab, var(--acc) 50%, transparent);
+    }
+}
+
+@keyframes rotateAng { to { --ang: 360deg } }
+@keyframes flow { from { background-position: 0% 50% } to { background-position: 100% 50% } }
+@keyframes glint { 0%, 62% { transform: translateX(-130%) skewX(-18deg) } 100% { transform: translateX(230%) skewX(-18deg) } }
+@keyframes hue {
+    from { filter: blur(30px) saturate(130%) hue-rotate(-18deg) }
+    to { filter: blur(30px) saturate(130%) hue-rotate(24deg) }
+}
+@keyframes breathe { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .3) inset, 0 0 28px 0 color-mix(in oklab, var(--acc2) 70%, transparent), 0 0 56px -6px color-mix(in oklab, var(--acc3) 60%, transparent) } }
+
+body {
+    font-feature-settings: "ss01", "cv11", "calt";
+    text-rendering: optimizeLegibility;
+    background:
+        radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--fg) 8%, transparent) 1px, transparent 1.5px) 0 0 / 22px 22px,
+        var(--bg);
+}
+
+body::before {
+    background:
+        radial-gradient(40vmax 40vmax at 12% 16%, color-mix(in oklab, var(--acc) 30%, transparent), transparent 62%),
+        radial-gradient(34vmax 34vmax at 88% 10%, color-mix(in oklab, var(--acc2) 26%, transparent), transparent 62%),
+        radial-gradient(46vmax 46vmax at 74% 94%, color-mix(in oklab, var(--acc3) 20%, transparent), transparent 62%),
+        radial-gradient(28vmax 28vmax at 28% 86%, color-mix(in oklab, #2fe6b7 12%, transparent), transparent 62%),
+        conic-gradient(from 210deg at 50% 50%, transparent, color-mix(in oklab, var(--acc) 6%, transparent), transparent 40%);
+    animation: aurora 40s ease-in-out infinite alternate, hue 26s ease-in-out infinite alternate;
+}
+
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--acc), var(--acc2)); opacity: .5; background-clip: padding-box }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(var(--acc2), var(--acc3)); background-clip: padding-box }
+
+/* ---- bars ---- */
+header, .shelves, footer { box-shadow: var(--edge) }
+
+header::after {
+    height: 1px;
+    opacity: 1;
+    background: var(--flow);
+    background-size: 200% 100%;
+    animation: flow 7s linear infinite;
+    -webkit-mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+    mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+    filter: drop-shadow(0 0 6px color-mix(in oklab, var(--acc) 80%, transparent));
+}
+
+/* ---- brand ---- */
+.logo {
+    width: 24px;
+    height: 24px;
+    background: conic-gradient(from var(--ang), var(--spectrum));
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .3) inset, 0 0 18px -2px color-mix(in oklab, var(--acc) 80%, transparent), 0 0 40px -10px color-mix(in oklab, var(--acc2) 70%, transparent);
+    animation: rotateAng 6s linear infinite, breathe 4s ease-in-out infinite;
+}
+
+.logo::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in oklab, var(--acc) 30%, transparent);
+    border-top-color: var(--acc2);
+    border-right-color: color-mix(in oklab, var(--acc3) 70%, transparent);
+    animation: spin 3s linear infinite reverse;
+}
+
+.logo::after {
+    inset: 6.5px;
+    background: radial-gradient(circle at 35% 30%, color-mix(in oklab, #fff 90%, var(--acc2)), var(--solid) 70%);
+}
+
+.brand {
+    background: var(--flow);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: flow 9s linear infinite;
+    filter: drop-shadow(0 2px 10px color-mix(in oklab, var(--acc) 35%, transparent));
+}
+
+/* ---- controls ---- */
+button { box-shadow: var(--edge), 0 1px 2px rgba(0, 0, 0, .05) }
+
+.group {
+    background: color-mix(in oklab, var(--solid) 40%, transparent);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .05), 0 1px 0 rgba(255, 255, 255, .25);
+}
+
+.group button:hover, .group select:hover { box-shadow: var(--shadow), var(--edge) }
+
+#save, #save:hover {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--flow);
+    background-size: 200% 100%;
+    animation: flow 6s linear infinite;
+    letter-spacing: .01em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+}
+
+#save::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 45%;
+    z-index: -1;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent);
+    animation: glint 5s var(--ease) infinite;
+    pointer-events: none;
+}
+
+#search { box-shadow: var(--edge) }
+
+/* ---- shelves & chips ---- */
+.shelf {
+    background: color-mix(in oklab, var(--solid) 30%, transparent);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+.shelf.over {
+    border-color: transparent;
+    background:
+        linear-gradient(color-mix(in oklab, var(--solid) 85%, var(--acc)), color-mix(in oklab, var(--solid) 85%, var(--acc))) padding-box,
+        conic-gradient(from var(--ang), var(--spectrum)) border-box;
+    animation: rotateAng 2s linear infinite;
+}
+
+.chip {
+    background:
+        linear-gradient(var(--solid), var(--solid)) padding-box,
+        conic-gradient(from var(--ang), var(--spectrum)) border-box;
+    animation: rotateAng 8s linear infinite;
+    box-shadow: 0 6px 18px -8px color-mix(in oklab, var(--acc) 65%, transparent), var(--edge);
+}
+
+.chip:hover {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 12%, transparent), 0 12px 28px -8px color-mix(in oklab, var(--acc2) 70%, transparent);
+}
+
+.chip .menu { box-shadow: var(--shadow-lg), var(--edge), var(--glow) }
+
+/* ---- grid ---- */
+#gridwrap {
+    background: radial-gradient(720px circle at var(--px) var(--py), color-mix(in oklab, var(--acc) 10%, transparent), color-mix(in oklab, var(--acc2) 4%, transparent) 35%, transparent 65%) fixed;
+}
+
+table {
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: var(--shadow-lg), var(--edge), var(--glow);
+}
+
+th {
+    background:
+        radial-gradient(200px circle at var(--mx, -400px) var(--my, -400px), color-mix(in oklab, var(--acc) 13%, transparent), transparent 70%),
+        linear-gradient(180deg, color-mix(in oklab, var(--solid) 94%, transparent), color-mix(in oklab, var(--solid) 80%, transparent));
+    letter-spacing: -.005em;
+}
+
+th::after { box-shadow: 0 0 10px color-mix(in oklab, var(--acc) 70%, transparent) }
+
+th .n {
+    background: linear-gradient(135deg, color-mix(in oklab, var(--acc) 14%, transparent), color-mix(in oklab, var(--acc2) 14%, transparent));
+    color: color-mix(in oklab, var(--acc) 65%, var(--fg));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--acc) 18%, transparent);
+}
+
+td.cell:focus {
+    box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--acc) 70%, transparent), inset 0 0 24px color-mix(in oklab, var(--acc) 12%, transparent);
+}
+
+/* ---- cards ---- */
+.card {
+    background:
+        radial-gradient(260px circle at var(--mx, 50%) var(--my, -200px), color-mix(in oklab, var(--acc) 9%, transparent), transparent 65%),
+        var(--solid);
+    box-shadow: var(--shadow), var(--edge);
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(150px circle at var(--mx, 50%) var(--my, 50%), var(--acc2), var(--acc) 45%, transparent 75%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0;
+    transition: opacity .3s var(--ease);
+    pointer-events: none;
+}
+
+.card:hover::after { opacity: 1 }
+
+.card:hover {
+    box-shadow: var(--shadow-lg), var(--edge), 0 14px 34px -16px color-mix(in oklab, var(--acc) 60%, transparent);
+}
+
+.card.sel {
+    background:
+        linear-gradient(var(--solid), var(--solid)) padding-box,
+        conic-gradient(from var(--ang), var(--spectrum)) border-box;
+    animation: rotateAng 4s linear infinite;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 14%, transparent), 0 18px 44px -14px color-mix(in oklab, var(--acc2) 60%, transparent), var(--shadow-lg);
+}
+
+.card.sel::after { display: none }
+
+.card .mk {
+    background: conic-gradient(from 200deg, var(--spectrum));
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .4) inset, 0 3px 12px -2px color-mix(in oklab, var(--acc) 80%, transparent);
+}
+
+.count {
+    box-shadow: var(--edge), 0 10px 26px -14px color-mix(in oklab, var(--acc) 70%, transparent);
+    text-shadow: 0 1px 14px color-mix(in oklab, var(--acc) 45%, transparent);
+}
+
+/* ---- editor ---- */
+aside {
+    background:
+        linear-gradient(90deg, transparent, var(--acc), var(--acc2), var(--acc3), transparent) top / 100% 1px no-repeat,
+        var(--card);
+    box-shadow: var(--shadow-lg), var(--edge), var(--glow);
+}
+
+aside textarea { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .05) }
+
+aside textarea:focus {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 18%, transparent), 0 16px 40px -18px color-mix(in oklab, var(--acc) 70%, transparent);
+}
+
+aside .dimrow label:has(input:checked) {
+    background: linear-gradient(135deg, color-mix(in oklab, var(--acc) 16%, transparent), color-mix(in oklab, var(--acc2) 12%, transparent));
+    box-shadow: 0 4px 14px -8px color-mix(in oklab, var(--acc) 80%, transparent);
+}
+
+.preview { box-shadow: var(--edge) }
+
+/* ---- footer ---- */
+#capture {
+    border: 1px solid transparent;
+    background:
+        linear-gradient(var(--solid), var(--solid)) padding-box,
+        linear-gradient(var(--line2), var(--line2)) border-box;
+    box-shadow: var(--shadow), var(--edge);
+}
+
+#capture:focus {
+    border-color: transparent;
+    background:
+        linear-gradient(var(--solid), var(--solid)) padding-box,
+        conic-gradient(from var(--ang), var(--spectrum)) border-box;
+    animation: rotateAng 4s linear infinite;
+}
+
+kbd {
+    background: linear-gradient(180deg, var(--solid), color-mix(in oklab, var(--solid) 92%, var(--fg)));
+    box-shadow: var(--edge);
+}
+
+/* ---- command palette ---- */
+#palette .box { position: relative }
+
+#palette .box::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from var(--ang), var(--spectrum));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: rotateAng 5s linear infinite;
+    pointer-events: none;
+}
+
+#palette li.act {
+    background: var(--flow);
+    background-size: 200% 100%;
+    animation: flow 6s linear infinite;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #gridwrap { background: none }
+    .card::after { display: none }
+}

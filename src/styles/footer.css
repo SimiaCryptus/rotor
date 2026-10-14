@@ -1,0 +1,36 @@
+/* ===================== footer ===================== */
+#capture {
+    flex: 1;
+    padding: 9px 18px;
+    font-size: 14px;
+    border-radius: 999px;
+    background: var(--solid);
+    box-shadow: var(--shadow)
+}
+
+#capture:focus {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--acc) 20%, transparent), 0 12px 32px -12px color-mix(in oklab, var(--acc) 70%, transparent)
+}
+
+.hint {
+    color: var(--mut);
+    font-size: 11.5px;
+    white-space: nowrap
+}
+
+kbd {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 1px 6px;
+    margin: 0 2px;
+    border-radius: 6px;
+    border: 1px solid var(--line2);
+    border-bottom-width: 2px;
+    background: var(--solid);
+    color: var(--fg)
+}
+
+#status {
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums
+}

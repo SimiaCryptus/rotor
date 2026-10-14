@@ -1,0 +1,84 @@
+/* ===================== command palette ===================== */
+#palette {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in oklab, var(--bg) 45%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 14vh;
+    z-index: 50
+}
+
+#palette.open {
+    display: flex;
+    animation: fade .18s ease-out
+}
+
+#palette .box {
+    width: 600px;
+    max-width: 92vw;
+    padding: 8px;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--line2);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg), 0 40px 100px -30px color-mix(in oklab, var(--acc) 55%, transparent);
+    animation: pop .3s var(--ease)
+}
+
+#palette input {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 12px 12px 0 0;
+    background: transparent;
+    box-shadow: none
+}
+
+#palette input:focus { box-shadow: none; border-color: var(--line) }
+
+#palette ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    max-height: 340px;
+    overflow: auto
+}
+
+#palette li {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 12px;
+    border-radius: 11px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .12s ease
+}
+
+#palette li:hover { background: color-mix(in oklab, var(--fg) 6%, transparent) }
+
+#palette li.act {
+    background: var(--grad);
+    color: #fff;
+    box-shadow: 0 10px 26px -12px color-mix(in oklab, var(--acc) 85%, transparent)
+}
+
+#palette li .muted {
+    margin-left: 12px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 12.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+#palette li.act .muted { color: rgba(255, 255, 255, .85) }
