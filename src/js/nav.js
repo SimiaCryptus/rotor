@@ -44,7 +44,9 @@ export function navGo(dir) {
     if (!e) return;
     to.push(navSnap());
     const v = doc.views.find(w => w.id === e.id);
-    Object.assign(v, e.snap);
+     // restore exactly: keys added since the snapshot (e.g. excludes) must not survive
+     for (const k of Object.keys(v)) delete v[k];
+     Object.assign(v, clone(e.snap));
     state.animateNext = true;
     doc.activeView = doc.views.some(w => w.id === e.active) ? e.active : v.id;
     persist();

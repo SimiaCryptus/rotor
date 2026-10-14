@@ -9,10 +9,11 @@ import {saveHTML, saveRotor} from "../io.js";
 import {isInstalled} from "../pwa.js";
 import {renderGrid} from "./grid.js";
 import {announce, status} from "./status.js";
-import {addDim, newView, moveDim, deleteDim, setKind} from "./actions.js";
+import {addDim, newView, moveDim, deleteDim, setKind, filterHide, clearAllFilters} from "./actions.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
 import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive} from "../drive/index.js";
+import {startCellEdit} from "./milkdown.js";
 const driveCmd = fn => driveAvailable() ? fn()
      : announce("Google Drive is available in the Drive build (dist/drive) served over HTTPS.");
 
@@ -44,6 +45,16 @@ const COMMANDS = [
     ["rows", "rows <dim> — put a dimension on rows", a => placeDim(a, "Rows")],
     ["cols", "cols <dim> — put a dimension on columns", a => placeDim(a, "Columns")],
     ["filter", "filter <dim> [value] — slice the view", a => filterCmd(a)],
+     ["hide", "hide <dim> <value> — blacklist a value (notes with it are hidden; — for unassigned)", a => {
+         const [dn, ...rest] = (a || "").trim().split(/\s+/), d = findDim(dn);
+         if (!d) return announce("No dimension “" + dn + "”");
+         const lbl = rest.join(" ").toLowerCase();
+         const val = lbl === "—" || lbl === "-" ? {id: null}
+             : lbl && valueObjs(state.doc, d.id).find(x => x.label.toLowerCase().startsWith(lbl));
+         if (!val) return announce("No value “" + lbl + "” on " + d.name);
+         filterHide(d.id, val.id);
+     }],
+     ["unfilter", "Remove every filter (show only / hide) from this view", () => clearAllFilters()],
     ["unused", "unused <dim> — take a dimension off the view", a => placeDim(a, "Unused")],
     ["view new", "view new [name]", a => newView(a || "New view", false)],
     ["view duplicate", "view duplicate [name]", a => newView(a || activeView().name + " copy", true)],
@@ -113,6 +124,11 @@ const COMMANDS = [
      ["lock", "Forget all passwords and re-lock decrypted notes", () => lockAll()],
      ["decrypt", "Remove encryption from the selected, unlocked note", () =>
          state.selectedId ? removeEncryption(state.selectedId) : announce("Select a note first.")],
+      ["edit", "Edit the selected note in the floating, dockable editor", () => {
+         if (!state.selectedId) return announce("Select a note first.");
+         const card = document.querySelector(`.card[data-id="${CSS.escape(state.selectedId)}"]`);
+          startCellEdit(state.selectedId, card);
+     }],
      ["ai synthesize", "Synthesizer — merge notes in the focused cell or view", () => openAgents("synthesizer")],
      ["ai classify", "ai classify <dim> — assign values on a dimension", a => {
          const d = findDim(a);

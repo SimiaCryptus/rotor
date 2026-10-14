@@ -10,17 +10,36 @@ import {addValue, deleteItem} from "./actions.js";
 import {openAgents} from "./agents-panel.js";
 import {AGENTS} from "../ai/agents.js";
 import {plaintextOf, unlock, lockItem, encryptItems, removeEncryption} from "./locks.js";
+import {createMilkdownEditor, startCellEdit, stopCellEdit, getActiveCellEditId} from "./milkdown.js";
+
+// The side panel's Crepe instance; destroyed before every rebuild (it used to leak one per render).
+let sideEd = null;
+
+function dropSide() {
+    const p = sideEd;
+    sideEd = null;
+    p?.then(e => e?.destroy()).catch(() => {});
+}
 
 export function renderEditor() {
     const doc = state.doc;
-    const ed = $("#editor"), it = doc.items.find(x => x.id === state.selectedId);
+     // #editor is the dockable frame (ui/panel.js); content goes into #editorBody.
+     const ed = $("#editor"), pane = $("#editorBody") || ed, it = doc.items.find(x => x.id === state.selectedId);
     ed.classList.toggle("open", !!it);
-    if (!it) return ed.replaceChildren();
-    if (!it.enc && ed.dataset.id === it.id && ed.contains(document.activeElement) && document.activeElement.tagName === "TEXTAREA") {
-        ed.querySelector(".preview").innerHTML = renderMarkdown(it.content);
-        return; // keep caret
+    if (!it) {
+        dropSide();
+         delete pane.dataset.id;
+         return pane.replaceChildren();
     }
-    ed.dataset.id = it.id;
+     if (!it.enc && pane.dataset.id === it.id && pane.contains(document.activeElement)) {
+        if (document.activeElement.tagName === "TEXTAREA") {
+             const prev = pane.querySelector(".preview");
+            if (prev) prev.innerHTML = renderMarkdown(it.content);
+        }
+        return; // keep focus and caret
+    }
+    dropSide();
+     pane.dataset.id = it.id;
     let body;
     if (it.enc) {
         const text = plaintextOf(it);
@@ -32,19 +51,68 @@ export function renderEditor() {
                     h("button", {onclick: () => lockItem(it.id)}, "Lock"),
                     h("button", {onclick: () => removeEncryption(it.id)}, "Remove encryption to edit"))];
     } else {
-        const ta = h("textarea", {"aria-label": "Note content (Markdown)"});
-        ta.value = it.content;
-        ta.addEventListener("input", () => {
-            if (state.doc.items.find(y => y.id === it.id)?.enc) return;
-            commit(D => {
-                const x = D.items.find(y => y.id === it.id);
-                x.content = ta.value;
-                x.modified = now();
-                if (x.provenance && !x.provenance.edited) x.provenance.edited = true;
-            }, {coalesceKey: "edit:" + it.id});
-        });
-        body = [h("p", {}, ta),
-            h("div", {class: "preview", html: renderMarkdown(it.content)}),
+         const sideMode = pane.dataset.mode || "wysiwyg";
+        const toggleBtn = h("button", {
+            type: "button",
+            class: "editor-mode-toggle",
+            onclick: () => {
+                 pane.dataset.mode = sideMode === "wysiwyg" ? "source" : "wysiwyg";
+                 delete pane.dataset.id;
+                renderEditor();
+            }
+        }, sideMode === "wysiwyg" ? "Source code" : "✦ WYSIWYG");
+        const popOut = h("button", {
+            type: "button",
+            class: "editor-mode-toggle",
+            title: "Edit in a floating, dockable window",
+            onclick: () => startCellEdit(it.id, document.querySelector(`.card[data-id="${CSS.escape(it.id)}"]`))
+        }, "⧉ Pop out");
+
+        const modeBar = h("div", {class: "editor-mode-bar"},
+            h("span", {class: "cell-editor-badge"}, sideMode === "wysiwyg" ? "✦ WYSIWYG" : "Markdown source"),
+            h("span", {class: "editor-mode-tools"}, popOut, toggleBtn)
+        );
+
+        let editorContent;
+        if (getActiveCellEditId() === it.id) {
+            editorContent = [h("div", {class: "preview muted"}, "⧉ This note is open in the floating editor. ",
+                h("button", {type: "button", onclick: () => stopCellEdit(true)}, "Bring it back here"))];
+        } else if (sideMode === "wysiwyg") {
+            const mount = h("div", {class: "milkdown-side-container"});
+            sideEd = createMilkdownEditor(mount, {
+                defaultValue: it.content,
+                inCell: false,
+                autoFocus: false,
+                onChange: (newContent) => {
+                    if (state.doc.items.find(y => y.id === it.id)?.enc) return;
+                    commit(D => {
+                        const x = D.items.find(y => y.id === it.id);
+                        if (!x) return;
+                        x.content = newContent;
+                        x.modified = now();
+                        if (x.provenance && !x.provenance.edited) x.provenance.edited = true;
+                    }, {coalesceKey: "edit:" + it.id});
+                }
+            });
+            editorContent = [modeBar, mount];
+        } else {
+            const ta = h("textarea", {"aria-label": "Note content (Markdown)"});
+            ta.value = it.content;
+            ta.addEventListener("input", () => {
+                if (state.doc.items.find(y => y.id === it.id)?.enc) return;
+                commit(D => {
+                    const x = D.items.find(y => y.id === it.id);
+                    if (!x) return;
+                    x.content = ta.value;
+                    x.modified = now();
+                    if (x.provenance && !x.provenance.edited) x.provenance.edited = true;
+                }, {coalesceKey: "edit:" + it.id});
+            });
+            editorContent = [modeBar, h("p", {}, ta), h("div", {class: "preview", html: renderMarkdown(it.content)})];
+        }
+
+        body = [
+            ...editorContent,
             h("div", {class: "ai-strip"}, h("span", {class: "muted"}, "✦ Agents:"),
                 h("button", {onclick: () => openAgents("expander", "note")}, "Expand"),
                 h("button", {onclick: () => openAgents("reducer", "note")}, "Reduce"),
@@ -77,7 +145,7 @@ export function renderEditor() {
                 hit.primary ? "" : h("span", {class: "muted"}, " (echo)")));
         }
     }
-    ed.replaceChildren(
+     pane.replaceChildren(
         h("div", {}, h("button", {
                 onclick: () => {
                     state.selectedId = null;

@@ -1,7 +1,7 @@
 // User-level document/view operations shared by grid, shelves, editor, toolbar and palette.
 import {state, activeView} from "../state.js";
 import {$, uid, now, clone} from "../util.js";
-import {dimOf, isDate} from "../model/doc.js";
+import {dimOf, isDate, valLabel} from "../model/doc.js";
 import {GRANS} from "../model/dates.js";
 import {commit} from "../store.js";
 import {setView, switchView, resetNav} from "../nav.js";
@@ -28,11 +28,13 @@ export function moveDim(d, shelf, idx) {
     setView(v => {
         v.rows = v.rows.filter(x => x !== d);
         v.cols = v.cols.filter(x => x !== d);
-        const wasPage = v.pages[d];
-        delete v.pages[d];
+         v.pages ||= {};
+         const wasPage = v.pages[d];
         if (shelf === "Rows") v.rows.splice(idx, 0, d);
         if (shelf === "Columns") v.cols.splice(idx, 0, d);
+         // Rotating keeps a dimension's whitelist; taking it off the view drops it.
         if (shelf === "Filter") v.pages[d] = wasPage || [];
+         else if (shelf === "Unused" || !wasPage?.length) delete v.pages[d];
     });
 }
 
@@ -62,6 +64,7 @@ export function deleteValue(did, vid) {
             if (!it.coords[did].length) delete it.coords[did];
         }
         for (const w of D.views) if (w.pages[did]) w.pages[did] = w.pages[did].filter(x => x !== vid);
+         for (const w of D.views) if (w.excludes?.[did]) w.excludes[did] = w.excludes[did].filter(x => x !== vid);
     });
 }
 
@@ -76,6 +79,7 @@ export function deleteDim(id) {
             w.rows = w.rows.filter(x => x !== id);
             w.cols = w.cols.filter(x => x !== id);
             delete w.pages[id];
+             if (w.excludes) delete w.excludes[id];
         }
     });
     resetNav();
@@ -108,6 +112,8 @@ export function mergeValue(did, vid, targetVid) {
          }
          for (const w of D.views) if (w.pages[did]?.includes(vid))
              w.pages[did] = [...new Set(w.pages[did].map(x => x === vid ? targetVid : x))];
+         for (const w of D.views) if (w.excludes?.[did]?.includes(vid))
+             w.excludes[did] = [...new Set(w.excludes[did].map(x => x === vid ? targetVid : x))];
      });
      announce(`Merged “${src.label}” into “${tgt.label}”. Ctrl/Cmd+Z to undo.`);
 }
@@ -148,6 +154,13 @@ export function mergeDim(id, targetId) {
              w.cols = rep(w.cols);
              if (w.pages[id] && !has) w.pages[targetId] = [...new Set(w.pages[id].map(v => map.get(v)).filter(Boolean))];
              delete w.pages[id];
+             if (w.excludes?.[id]) {
+                 const ex = new Set(w.excludes[targetId] || []);
+                 for (const v of w.excludes[id]) ex.add(v == null ? null : map.get(v));
+                 ex.delete(undefined);
+                 if (ex.size) w.excludes[targetId] = [...ex];
+                 delete w.excludes[id];
+             }
          }
      });
      resetNav();
@@ -174,6 +187,7 @@ export function setKind(id, kind, gran) {
             d.values = [];
             for (const w of D.views) if (w.pages[id]) w.pages[id] = [];
         }
+         if (kind === "date" || d.kind === "date") for (const w of D.views) if (w.excludes) delete w.excludes[id];
         d.kind = kind;
     });
     const d = dimOf(state.doc, id);
@@ -215,6 +229,7 @@ export function createIn(addr, content = "") {
     state.selectedId = id;
     render();
     setTimeout(() => $("#editor textarea")?.focus());
+    return id;
 }
 
 // Locality rule (§7): only dimensions in the gesture's addresses change.
@@ -256,4 +271,62 @@ export function deleteItem(id) {
     if (state.selectedId === id) state.selectedId = null;
     render();
     announce("Deleted. Ctrl/Cmd+Z to undo.");
+}
+// ---- view filters: whitelist (view.pages) and blacklist (view.excludes). View-only, never mutate notes. ----
+const onAxis = (w, did) => w.rows.includes(did) || w.cols.includes(did);
+const dropEmpty = (w, m, did, keepEmpty) => {
+     if (m[did] && !m[did].length && !keepEmpty) delete m[did];
+};
+const fname = (did, vid) => `${dimOf(state.doc, did)?.name ?? "?"} “${valLabel(state.doc, did, vid)}”`;
+export function filterOnly(did, vid) {
+     setView(w => {
+         w.pages ||= {};
+         w.pages[did] = [vid];
+         if (w.excludes?.[did]) {
+             w.excludes[did] = w.excludes[did].filter(x => x !== vid);
+             dropEmpty(w, w.excludes, did, false);
+         }
+     });
+     announce("Showing only " + fname(did, vid) + ".");
+}
+export function filterHide(did, vid) {
+     setView(w => {
+         w.excludes ||= {};
+         const ex = w.excludes[did] || [];
+         if (!ex.includes(vid)) w.excludes[did] = [...ex, vid];
+         if (w.pages?.[did]?.includes(vid)) {
+             w.pages[did] = w.pages[did].filter(x => x !== vid);
+             dropEmpty(w, w.pages, did, !onAxis(w, did));
+         }
+     });
+     announce("Hiding notes with " + fname(did, vid) + ".");
+}
+export function removeFilter(did, vid, kind) {
+     setView(w => {
+         const m = kind === "exclude" ? w.excludes : w.pages;
+         if (!m?.[did]) return;
+         m[did] = m[did].filter(x => x !== vid);
+         dropEmpty(w, m, did, kind !== "exclude" && !onAxis(w, did));
+     });
+     announce("Filter removed.");
+}
+export function clearDimFilters(did) {
+     setView(w => {
+         if (w.excludes) delete w.excludes[did];
+         if (w.pages?.[did]) {
+             if (onAxis(w, did)) delete w.pages[did];
+             else w.pages[did] = [];
+         }
+     });
+     announce((dimOf(state.doc, did)?.name ?? "Dimension") + " filters cleared.");
+}
+export function clearAllFilters() {
+     setView(w => {
+         w.excludes = {};
+         for (const d of Object.keys(w.pages || {})) {
+             if (onAxis(w, d)) delete w.pages[d];
+             else w.pages[d] = [];
+         }
+     });
+     announce("All filters cleared.");
 }

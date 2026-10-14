@@ -8,6 +8,7 @@ export const state = {
     lastSaveFile: null,
     lastRotorFile: null,
     isInstalledPwa: false,
+    editingCellId: null,
      // Google Drive link for the open notebook (Drive build only), never persisted
      drive: null,
     // view navigation (§9.3)

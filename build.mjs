@@ -27,13 +27,14 @@ const CSP_SLOT = "@rotor:csp";
 const DATA_TAG = '<script type="application/json" id="rotor-data"></script>';
 
 const AI_HOSTS = "https://api.openai.com https://api.anthropic.com http://localhost:* http://127.0.0.1:*";
+const MILKDOWN_HOSTS = "https://esm.sh https://cdn.jsdelivr.net https://unpkg.com";
 
 const CSP_STANDALONE = [
     "default-src 'none'",
-    "script-src 'unsafe-inline' 'self'",
-    "style-src 'unsafe-inline'",
+     `script-src 'unsafe-inline' 'unsafe-eval' 'self' ${MILKDOWN_HOSTS}`,
+    `style-src 'unsafe-inline' ${MILKDOWN_HOSTS}`,
     "img-src data: blob: 'self'",
-    `connect-src 'self' ${AI_HOSTS}`,
+    `connect-src 'self' ${MILKDOWN_HOSTS} ${AI_HOSTS}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "form-action 'none'",
@@ -43,10 +44,10 @@ const CSP_STANDALONE = [
 // Google Identity Services (token popup) + Google Picker + Drive REST API, nothing else.
 const CSP_DRIVE = [
     "default-src 'none'",
-    "script-src 'unsafe-inline' 'self' https://accounts.google.com/gsi/client https://apis.google.com https://www.gstatic.com",
-    "style-src 'unsafe-inline' https://accounts.google.com/gsi/style",
+     `script-src 'unsafe-inline' 'unsafe-eval' 'self' ${MILKDOWN_HOSTS} https://accounts.google.com/gsi/client https://apis.google.com https://www.gstatic.com`,
+    `style-src 'unsafe-inline' ${MILKDOWN_HOSTS} https://accounts.google.com/gsi/style`,
     "img-src data: blob: 'self' https://*.googleusercontent.com https://*.gstatic.com",
-    `connect-src 'self' https://www.googleapis.com https://content.googleapis.com https://accounts.google.com/gsi/ ${AI_HOSTS}`,
+    `connect-src 'self' ${MILKDOWN_HOSTS} https://www.googleapis.com https://content.googleapis.com https://accounts.google.com/gsi/ ${AI_HOSTS}`,
     "worker-src 'self'",
     "manifest-src 'self'",
     "frame-src https://accounts.google.com/gsi/ https://docs.google.com https://drive.google.com https://content.googleapis.com",
@@ -204,6 +205,7 @@ const shared = {
     legalComments: "none",
     charset: "utf8",
     logLevel: "warning",
+    external: ["https://*", "http://*"],
 };
 
 const jsOpts = name => ({

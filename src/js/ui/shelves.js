@@ -4,7 +4,7 @@ import {state, activeView} from "../state.js";
 import {dimOf, valueObjs, valLabel, coordsOf} from "../model/doc.js";
 import {GRANS} from "../model/dates.js";
 import {setView} from "../nav.js";
-import {moveDim, deleteDim, setKind, renameDim, mergeDim} from "./actions.js";
+import {moveDim, deleteDim, setKind, renameDim, mergeDim, removeFilter} from "./actions.js";
 import {encryptItems, decryptItems} from "./locks.js";
 import {openMenu} from "./contextmenu.js";
 
@@ -45,8 +45,30 @@ function chipMenu(e, id) {
 
 export function renderShelves() {
     const doc = state.doc, v = activeView();
-    const used = new Set([...v.rows, ...v.cols, ...Object.keys(v.pages)]);
-    const shelf = (name, ids) => {
+     const onAxis = d => v.rows.includes(d) || v.cols.includes(d);
+     // Dimensions parked on the Filter shelf (draggable chips with a checklist)
+     const pageDims = Object.keys(v.pages || {}).filter(d => !onAxis(d) && dimOf(doc, d));
+     const used = new Set([...v.rows, ...v.cols, ...pageDims]);
+     // Removable tokens: whitelists on axis dimensions, and every blacklist entry
+     const token = (did, vid, kind) => {
+         const name = dimOf(doc, did).name, lbl = valLabel(doc, did, vid);
+         const txt = kind === "exclude" ? `Hiding notes with ${name} = ${lbl}` : `Showing only ${name} = ${lbl}`;
+         return h("span", {class: "ftok " + kind, title: txt},
+             h("span", {}, name + (kind === "exclude" ? " ≠ " : " = ")),
+             h("span", {class: "ftok-v"}, lbl),
+             h("button", {
+                 type: "button", class: "ftok-x", "aria-label": "Remove filter: " + txt,
+                 onclick: () => removeFilter(did, vid, kind)
+             }, "×"));
+     };
+     const tokens = [];
+     for (const [d, sel] of Object.entries(v.pages || {}))
+         if (onAxis(d) && dimOf(doc, d)) for (const x of sel) tokens.push(token(d, x, "include"));
+     for (const [d, sel] of Object.entries(v.excludes || {}))
+         if (dimOf(doc, d)) for (const x of sel) tokens.push(token(d, x, "exclude"));
+     if (!pageDims.length && !tokens.length)
+         tokens.push(h("span", {class: "muted shelf-hint"}, "right-click a header to show only / hide"));
+     const shelf = (name, ids, extra = []) => {
         const s = h("div", {class: "shelf", "data-shelf": name}, h("b", {}, name));
         s.addEventListener("dragover", e => {
             e.preventDefault();
@@ -63,10 +85,11 @@ export function renderShelves() {
             moveDim(d, name, idx);
         });
         ids.forEach(id => s.append(chip(id, name)));
+         extra.forEach(x => s.append(x));
         return s;
     };
     $("#shelves").replaceChildren(
-        shelf("Filter", Object.keys(v.pages)), shelf("Rows", v.rows), shelf("Columns", v.cols),
+         shelf("Filter", pageDims, tokens), shelf("Rows", v.rows), shelf("Columns", v.cols),
         shelf("Unused", doc.dimensions.map(d => d.id).filter(id => !used.has(id))),
         h("label", {}, h("input", {
             type: "checkbox",
@@ -113,15 +136,25 @@ function chip(id, shelfName) {
      c.addEventListener("dblclick", () => renameDim(id));
     if (shelfName === "Filter") {
         const sel = v.pages[id];
-        const menu = h("div", {class: "menu"}, valueObjs(doc, id).map(val => h("label", {},
+         const opts = [...valueObjs(doc, id), {id: null, label: "— (unassigned)"}];
+         const menu = h("div", {class: "menu"}, opts.map(val => h("label", {},
             h("input", {
                 type: "checkbox", checked: sel.includes(val.id), onchange: e => setView(w => {
-                    w.pages[id] = e.target.checked ? [...w.pages[id], val.id] : w.pages[id].filter(x => x !== val.id);
+                     const cur = w.pages[id] || [];
+                     w.pages[id] = e.target.checked ? [...cur, val.id] : cur.filter(x => x !== val.id);
                 })
             }),
             " " + val.label)));
         const label = d.name + (sel.length ? ": " + sel.map(x => valLabel(doc, id, x)).join(", ") : "");
-        c.append(h("details", {}, h("summary", {}, label + " ▾"), menu));
+         c.append(h("details", {}, h("summary", {}, label + " ▾"), menu),
+             h("button", {
+                 type: "button", class: "chip-x", title: "Remove from Filter", "aria-label": `Remove ${d.name} filter`,
+                 onclick: e => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     moveDim(id, "Unused", 0);
+                 }
+             }, "×"));
     } else c.textContent = d.name + (d.kind === "date" ? ` (${d.granularity || "week"})` : "");
     return c;
 }

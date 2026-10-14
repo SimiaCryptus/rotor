@@ -1,0 +1,346 @@
+/* ===================== Milkdown (Crepe) + floating note editor ===================== */
+
+/* the card currently open in the floating editor */
+.card.editing {
+    border-color: var(--acc);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 30%, transparent), var(--shadow)
+}
+
+/* ---- docking pushes the app instead of covering it ---- */
+body.fe-dock-left { padding-left: var(--fe-dock) }
+body.fe-dock-right { padding-right: var(--fe-dock) }
+body.fe-dock-bottom { padding-bottom: var(--fe-dock) }
+body.fe-dragging, body.fe-dragging * { user-select: none !important; -webkit-user-select: none !important }
+
+/* ---- window ---- */
+.fe {
+    position: fixed;
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--line2);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg), var(--glow, none);
+    overflow: hidden;
+    animation: pop .2s var(--ease)
+}
+
+.fe.fe-moving { opacity: .93; animation: none }
+.fe[data-dock="left"] { left: 0; top: 0; bottom: 0; width: var(--fe-dock); border-radius: 0 16px 16px 0; border-left: 0 }
+.fe[data-dock="right"] { right: 0; top: 0; bottom: 0; width: var(--fe-dock); border-radius: 16px 0 0 16px; border-right: 0 }
+.fe[data-dock="bottom"] { left: 0; right: 0; bottom: 0; height: var(--fe-dock); border-radius: 16px 16px 0 0; border-bottom: 0 }
+
+.fe-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 10px;
+    cursor: move;
+    user-select: none;
+    touch-action: none;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--solid) 92%, transparent), color-mix(in oklab, var(--solid) 70%, transparent))
+}
+
+.fe-grip { color: var(--mut); font-size: 13px; line-height: 1 }
+
+.fe-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 650;
+    font-size: 12.5px
+}
+
+.fe-tools { display: flex; align-items: center; gap: 3px; flex: none }
+
+.fe-head button { padding: 2px 8px; font-size: 12px; border-radius: 7px; line-height: 1.5 }
+.fe-head .fe-dockbtn { padding: 2px 6px; min-width: 26px }
+
+.fe-head button[aria-pressed="true"] {
+    border-color: var(--acc);
+    color: var(--acc);
+    background: color-mix(in oklab, var(--acc) 12%, var(--solid))
+}
+
+.fe-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--line2) }
+
+.fe-body { flex: 1; min-height: 0; display: flex; flex-direction: column }
+.fe.fe-row .fe-body { flex-direction: row }
+
+.fe-pane {
+    position: relative;
+    min-height: 60px;
+    min-width: 0;
+    overflow: auto;
+    background: var(--solid)
+}
+
+.fe-src { display: flex; min-height: 60px; min-width: 0 }
+
+.fe-src textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    background: color-mix(in oklab, var(--fg) 3%, var(--solid))
+}
+
+.fe-src textarea:focus { box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--acc) 40%, transparent) }
+
+.fe-split {
+    flex: 0 0 7px;
+    position: relative;
+    cursor: row-resize;
+    touch-action: none;
+    background: var(--line);
+    outline: none
+}
+
+.fe.fe-row .fe-split { cursor: col-resize }
+
+.fe-split::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 36px;
+    height: 3px;
+    transform: translate(-50%, -50%);
+    border-radius: 3px;
+    background: var(--line2);
+    transition: background-color .15s ease
+}
+
+.fe.fe-row .fe-split::after { width: 3px; height: 36px }
+.fe-split:hover::after, .fe-split:focus-visible::after { background: var(--acc) }
+
+.fe-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--mut);
+    border-top: 1px solid var(--line);
+    white-space: nowrap;
+    overflow: hidden
+}
+
+.fe-foot kbd { font-size: 9.5px; padding: 0 4px }
+
+/* resize handles */
+.fe-rz { position: absolute; z-index: 3; touch-action: none }
+.fe-rz[data-edge="n"] { top: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize }
+.fe-rz[data-edge="s"] { bottom: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize }
+.fe-rz[data-edge="e"] { right: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize }
+.fe-rz[data-edge="w"] { left: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize }
+.fe-rz[data-edge="ne"] { right: 0; top: 0; width: 12px; height: 12px; cursor: nesw-resize }
+.fe-rz[data-edge="sw"] { left: 0; bottom: 0; width: 12px; height: 12px; cursor: nesw-resize }
+.fe-rz[data-edge="nw"] { left: 0; top: 0; width: 12px; height: 12px; cursor: nwse-resize }
+.fe-rz[data-edge="se"] { right: 0; bottom: 0; width: 12px; height: 12px; cursor: nwse-resize }
+.fe-rz:hover { background: color-mix(in oklab, var(--acc) 35%, transparent) }
+
+.fe[data-dock="left"] .fe-rz:not([data-edge="e"]),
+.fe[data-dock="right"] .fe-rz:not([data-edge="w"]),
+.fe[data-dock="bottom"] .fe-rz:not([data-edge="n"]) { display: none }
+.fe[data-dock="left"] .fe-rz, .fe[data-dock="right"] .fe-rz { top: 0; bottom: 0 }
+.fe[data-dock="bottom"] .fe-rz { left: 0; right: 0 }
+
+/* dock drop preview */
+.fe-dockhint {
+    position: fixed;
+    z-index: 44;
+    pointer-events: none;
+    border: 2px dashed var(--acc);
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--acc) 14%, transparent)
+}
+
+.fe-dockhint[data-dock="left"] { left: 6px; top: 6px; bottom: 6px; width: min(440px, 40vw) }
+.fe-dockhint[data-dock="right"] { right: 6px; top: 6px; bottom: 6px; width: min(440px, 40vw) }
+.fe-dockhint[data-dock="bottom"] { left: 6px; right: 6px; bottom: 6px; height: min(320px, 40vh) }
+
+/* textarea fallback when Milkdown can't load (offline, strict CSP) */
+.cell-fallback-editor, .side-fallback-editor {
+    width: 100%;
+    min-height: 70px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    background: transparent;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    color: var(--fg);
+    padding: 10px 14px;
+    box-shadow: none
+}
+
+.fe-pane .cell-fallback-editor { height: 100%; resize: none }
+.cell-fallback-editor:focus, .side-fallback-editor:focus { box-shadow: none }
+
+/* ---- Crepe: map its theme onto our tokens (beats .milkdown from frame.css by specificity) ---- */
+.rotor-md .milkdown {
+    --crepe-color-background: var(--solid);
+    --crepe-color-on-background: var(--fg);
+    --crepe-color-surface: var(--solid);
+    --crepe-color-surface-low: color-mix(in oklab, var(--fg) 4%, var(--solid));
+    --crepe-color-on-surface: var(--fg);
+    --crepe-color-on-surface-variant: var(--mut);
+     /* Crepe uses outline for icon fills (toolbar, slash menu, block handle): must be clearly visible */
+     --crepe-color-outline: color-mix(in oklab, var(--fg) 62%, transparent);
+    --crepe-color-primary: var(--acc);
+    --crepe-color-secondary: color-mix(in oklab, var(--acc) 18%, var(--solid));
+    --crepe-color-on-secondary: var(--fg);
+    --crepe-color-inverse: var(--fg);
+    --crepe-color-on-inverse: var(--solid);
+    --crepe-color-inline-code: color-mix(in oklab, var(--acc) 72%, var(--fg));
+    --crepe-color-error: var(--danger);
+    --crepe-color-hover: color-mix(in oklab, var(--acc) 10%, transparent);
+    --crepe-color-selected: color-mix(in oklab, var(--acc) 18%, transparent);
+    --crepe-color-inline-area: color-mix(in oklab, var(--fg) 6%, transparent);
+    --crepe-font-title: inherit;
+    --crepe-font-default: inherit;
+    --crepe-font-code: var(--mono);
+    --crepe-shadow-1: var(--shadow);
+    --crepe-shadow-2: var(--shadow-lg);
+    position: relative;
+    min-height: 100%;
+    background: transparent;
+    color: var(--fg);
+    font-size: 13.5px
+}
+
+/* frame.css is a full-page theme (60px × 120px padding, 42px headings): compact it */
+.rotor-md .milkdown .ProseMirror {
+    padding: 12px 16px 18px 52px; /* left room for Crepe's block handle */
+    min-height: 100%;
+    outline: none;
+    word-break: break-word
+}
+
+.rotor-md .milkdown .ProseMirror p { font-size: inherit; line-height: 1.55; padding: 2px 0; margin: 0 }
+.rotor-md .milkdown .ProseMirror h1 { font-size: 1.55em; line-height: 1.3; margin: 10px 0 4px; padding: 0 }
+.rotor-md .milkdown .ProseMirror h2 { font-size: 1.32em; line-height: 1.3; margin: 10px 0 4px; padding: 0 }
+.rotor-md .milkdown .ProseMirror h3 { font-size: 1.15em; line-height: 1.35; margin: 8px 0 4px; padding: 0 }
+.rotor-md .milkdown .ProseMirror h4,
+.rotor-md .milkdown .ProseMirror h5,
+.rotor-md .milkdown .ProseMirror h6 { font-size: 1em; line-height: 1.4; margin: 8px 0 2px; padding: 0 }
+.rotor-md .milkdown .ProseMirror li { line-height: 1.55 }
+.rotor-md .milkdown .ProseMirror blockquote { margin: 6px 0; padding-left: 12px }
+
+/* our global control styles must not leak into Crepe's toolbar / menus / link tooltip.
+   Crepe's own rules (.milkdown .milkdown-toolbar …) are more specific and still win. */
+.rotor-md button,
+.rotor-md button:hover,
+.rotor-md button:active,
+.rotor-md button:focus-visible,
+.rotor-md input,
+.rotor-md input:focus {
+    font: inherit;
+    color: inherit;
+    background-color: transparent;
+    border: 0;
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 0;
+    transform: none;
+    transition: none;
+    min-width: 0
+}
+
+.rotor-md .milkdown .milkdown-toolbar,
+.rotor-md .milkdown .milkdown-slash-menu,
+.rotor-md .milkdown .milkdown-link-preview,
+.rotor-md .milkdown .milkdown-link-edit { z-index: 20 }
+
+.rotor-md .milkdown .milkdown-toolbar { box-shadow: var(--shadow-lg); border: 1px solid var(--line2) }
+/* Toolbar: opaque surface, icons always visible (they were drawn in a near-transparent outline colour) */
+.rotor-md .milkdown .milkdown-toolbar {
+     background: var(--solid);
+     color: var(--fg);
+     border-radius: 10px
+}
+.rotor-md .milkdown .milkdown-toolbar .toolbar-item,
+.rotor-md .milkdown .milkdown-slash-menu button,
+.rotor-md .milkdown .milkdown-block-handle .operation-item { color: var(--fg) }
+.rotor-md .milkdown .milkdown-toolbar .toolbar-item svg,
+.rotor-md .milkdown .milkdown-slash-menu svg,
+.rotor-md .milkdown .milkdown-block-handle svg,
+.rotor-md .milkdown .milkdown-link-preview svg,
+.rotor-md .milkdown .milkdown-link-edit svg {
+     fill: color-mix(in oklab, var(--fg) 78%, transparent)
+}
+.rotor-md .milkdown .milkdown-toolbar .toolbar-item:hover {
+     background-color: color-mix(in oklab, var(--acc) 12%, transparent)
+}
+.rotor-md .milkdown .milkdown-toolbar .toolbar-item.active svg,
+.rotor-md .milkdown .milkdown-toolbar .toolbar-item:hover svg { fill: var(--acc) }
+.rotor-md .milkdown .milkdown-toolbar .divider { background: var(--line2) }
+
+
+/* ---- side panel editor ---- */
+.milkdown-side-container {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--solid);
+    min-height: 160px;
+    height: 260px;
+    resize: vertical;
+    overflow: auto;
+    margin: 6px 0 8px;
+    transition: border-color .2s var(--ease), box-shadow .2s var(--ease)
+}
+
+.milkdown-side-container:focus-within {
+    border-color: var(--acc);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--acc) 20%, transparent)
+}
+
+.editor-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 4px 0
+}
+
+.editor-mode-tools { display: flex; gap: 4px }
+
+.editor-mode-toggle { font-size: 11px; padding: 2px 8px; border-radius: 6px }
+
+.cell-editor-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--acc)
+}
+
+/* phones: always a bottom sheet */
+@media (max-width: 640px) {
+    .fe, .fe[data-dock] {
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        bottom: 0 !important;
+        width: auto !important;
+        height: 72vh !important;
+        border-radius: 16px 16px 0 0
+    }
+    body.fe-dock-left, body.fe-dock-right, body.fe-dock-bottom { padding: 0 }
+    .fe-rz, .fe-head .fe-dockbtn { display: none }
+}

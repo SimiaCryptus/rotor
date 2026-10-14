@@ -11,12 +11,18 @@ import {setView} from "../nav.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
 import {openMenu} from "./contextmenu.js";
+import {startCellEdit, getActiveCellEditId} from "./milkdown.js";
 import {
      addValue, renameValue, deleteValue, moveValue, assignValue, mergeValue,
-    createIn, moveItem, removeFromCell, deleteItem
+     createIn, moveItem, removeFromCell, deleteItem, filterOnly, filterHide, clearDimFilters
 } from "./actions.js";
 
 const RENDER_CAP = 2000;
+// Create a note at an address and open it in the floating editor next to its new card.
+function createAndEdit(addr) {
+     const id = createIn(addr); // renders synchronously
+     startCellEdit(id, document.querySelector(`.card[data-id="${CSS.escape(id)}"]`));
+}
 
 export function headerLabel(dims, tuple) {
     return tuple.map((v, i) => valLabel(state.doc, dims[i], v)).join(" › ") || "(all)";
@@ -39,7 +45,22 @@ function headerMenu(e, isRow, dims, tuple) {
      const label = headerLabel(dims, tuple);
      const val = editable ? valLabel(doc, did, vid) : "";
      const others = editable ? dimOf(doc, did).values.filter(v => v.id !== vid) : [];
+      // Whitelist / blacklist filters for every level of the header (incl. the "—" bucket and date buckets)
+      const v = activeView();
+      const filterItems = dims.flatMap((d, i) => {
+          const fv = tuple[i], name = dimOf(doc, d)?.name || "?", lbl = valLabel(doc, d, fv);
+          const pre = dims.length > 1 ? name + " " : "";
+          return [
+              {label: `Show only ${pre}“${lbl}”`, hint: `Whitelist: keep only notes with ${name} = ${lbl}`, action: () => filterOnly(d, fv)},
+              {label: `Hide ${pre}“${lbl}”`, hint: `Blacklist: hide notes with ${name} = ${lbl}`, action: () => filterHide(d, fv)},
+          ];
+      });
+      const clearItems = dims.filter(d => v.pages?.[d]?.length || v.excludes?.[d]?.length)
+          .map(d => ({label: `Clear ${dimOf(doc, d)?.name} filters`, action: () => clearDimFilters(d)}));
      openMenu(e, [
+          ...filterItems,
+          ...clearItems,
+          filterItems.length && "-",
          editable && {label: "Rename…", action: () => renameValue(did, vid)},
          editable && {
              label: "Merge with…", disabled: !others.length, subtitle: `Merge “${val}” into`,
@@ -199,7 +220,8 @@ function cellEl(v, r, c, placements, ri, ci) {
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (e.key === "Enter" && e.target === td) {
             e.preventDefault();
-            return createIn(cellAddress(v, r, c));
+             createAndEdit(cellAddress(v, r, c));
+            return;
         }
         const card = e.target.closest?.(".card");
         if (e.key === "ArrowUp" || e.key === "ArrowDown") {
@@ -213,7 +235,7 @@ function cellEl(v, r, c, placements, ri, ci) {
         }
     });
     td.addEventListener("dblclick", e => {
-        if (e.target === td) createIn(cellAddress(v, r, c));
+         if (e.target === td) createAndEdit(cellAddress(v, r, c));
     });
     td.addEventListener("dragover", e => {
         if (e.dataTransfer.types.includes("text/rotor-item")) {
@@ -243,10 +265,14 @@ function cellEl(v, r, c, placements, ri, ci) {
     for (const {item, primary} of placements) {
          const locked = isLocked(item);
          const text = item.enc ? (plaintextOf(item) ?? LOCKED) : item.content;
+         const isEditingThis = getActiveCellEditId() === item.id;
         const attrs = {
              class: "card" + (primary ? "" : " echo") + (mode === "list" ? " list" : "") + (item.id === state.selectedId ? " sel" : "")
-                 + (item.enc ? (locked ? " locked" : " unlocked") : ""),
-            draggable: "true", tabindex: "0", "data-id": item.id
+                 + (item.enc ? (locked ? " locked" : " unlocked") : "")
+                 + (isEditingThis ? " editing" : ""),
+             draggable: "true",
+            tabindex: "0",
+            "data-id": item.id
         };
          if (mode !== "list") attrs.html = renderMarkdown(text || "*(empty)*");
         const card = h("div", attrs);
@@ -260,6 +286,23 @@ function cellEl(v, r, c, placements, ri, ci) {
              e.stopPropagation();
              unlock(item.id);
          });
+         if (!locked && !item.enc) card.addEventListener("dblclick", e => {
+             e.stopPropagation();
+             startCellEdit(item.id, card);
+         });
+         if (!item.enc && !locked && mode !== "count") {
+             const editBtn = h("button", {
+                 type: "button",
+                 class: "card-edit-btn",
+                  title: "Edit in the floating editor (Enter)",
+                 "aria-label": "Edit note",
+                 onclick: (e) => {
+                     e.stopPropagation();
+                     startCellEdit(item.id, card);
+                 }
+             }, "✎");
+             card.append(editBtn);
+         }
         if (!primary) {
             const where = [...v.rows, ...v.cols].filter(d => coordsOf(doc, item, d).length > 1)
                 .map(d => dimOf(doc, d).name + ": " + coordsOf(doc, item, d).map(x => valLabel(doc, d, x)).join(", "))
@@ -285,7 +328,15 @@ function cellEl(v, r, c, placements, ri, ci) {
                 removeFromCell(item.id, cellAddress(v, r, c));
             }
             if (e.key === "Delete" && e.shiftKey) deleteItem(item.id);
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (locked) {
+                    unlock(item.id);
+                } else if (!item.enc) {
+                    startCellEdit(item.id, card);
+                    return;
+                }
                 state.selectedId = item.id;
                 render();
             }

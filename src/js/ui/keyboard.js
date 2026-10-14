@@ -7,10 +7,13 @@ import {saveAny} from "../drive/index.js";
 import {render} from "./render.js";
 import {palOpen} from "./palette.js";
 import {openAgents} from "./agents-panel.js";
+import {flushCellEdit} from "./milkdown.js";
 
 export function initKeyboard() {
     document.addEventListener("keydown", e => {
-        const mod = e.ctrlKey || e.metaKey, typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+        // The floating editor is non-modal: shortcuts work whenever focus is outside a text field.
+        const ae = document.activeElement, mod = e.ctrlKey || e.metaKey,
+            typing = /INPUT|TEXTAREA|SELECT/.test(ae.tagName) || ae.isContentEditable;
         if (mod && e.key.toLowerCase() === "k") {
             e.preventDefault();
             palOpen();
@@ -28,10 +31,11 @@ export function initKeyboard() {
             $("#transpose").click();
         } else if (mod && e.key.toLowerCase() === "s") {
             e.preventDefault();
-             saveAny();
-         } else if (mod && e.key.toLowerCase() === "j") {
-             e.preventDefault();
-             openAgents();
+            flushCellEdit(); // pending floating-editor text goes into the save
+            saveAny();
+        } else if (mod && e.key.toLowerCase() === "j") {
+            e.preventDefault();
+            openAgents();
         } else if (e.key === "Escape") {
             state.selectedId = null;
             render();

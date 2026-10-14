@@ -83,7 +83,8 @@ export function initToolbar() {
         commit(D => {
             const {content, coords} = parseCapture(D, text);
             const v = D.views.find(w => w.id === D.activeView);
-            for (const [d, sel] of Object.entries(v.pages)) if (sel.length === 1 && !coords[d] && !isDate(D, d)) coords[d] = [sel[0]];
+             for (const [d, sel] of Object.entries(v.pages || {}))
+                 if (sel.length === 1 && sel[0] != null && !coords[d] && !isDate(D, d)) coords[d] = [sel[0]];
             D.items.push({id: uid("i"), content, coords, created: now(), modified: now()});
         });
         e.target.value = "";

@@ -1,32 +1,98 @@
-/* ===================== editor ===================== */
+/* ===================== editor panel (floating / dockable, see ui/panel.js) ===================== */
 aside {
+    position: relative;
+    flex: none;
     width: 360px;
     margin: 16px 16px 16px 0;
-    padding: 16px 18px;
     border: 1px solid var(--line2);
     border-radius: 18px;
     background: var(--card);
     -webkit-backdrop-filter: blur(22px) saturate(170%);
     backdrop-filter: blur(22px) saturate(170%);
     box-shadow: var(--shadow-lg);
-    overflow: auto;
+    overflow: hidden;
     display: none
 }
 
 aside.open {
-    display: block;
+    display: flex;
+    flex-direction: column;
     animation: slideIn .35s var(--ease)
 }
 
-aside > div:first-child {
+aside.ed-moving { opacity: .93; animation: none }
+
+/* docking */
+aside[data-dock="left"] { order: -1; margin: 16px 0 16px 16px }
+body[data-ed-dock="bottom"] main { flex-direction: column }
+body[data-ed-dock="bottom"] #gridwrap { min-height: 0 }
+aside[data-dock="bottom"] { width: auto; margin: 0 16px 16px }
+aside[data-dock="float"] { position: fixed; margin: 0; z-index: 40 }
+
+.ed-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    cursor: move;
+    user-select: none;
+    touch-action: none;
+    border-bottom: 1px solid var(--line)
+}
+
+.ed-title {
+    flex: 1;
+    font-size: 10.5px;
+    font-weight: 680;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--mut)
+}
+
+.ed-tools { display: flex; gap: 3px }
+
+.ed-head button { padding: 2px 6px; min-width: 26px; font-size: 12px; border-radius: 7px; line-height: 1.5 }
+
+.ed-head button[aria-pressed="true"] {
+    border-color: var(--acc);
+    color: var(--acc);
+    background: color-mix(in oklab, var(--acc) 12%, var(--solid))
+}
+
+#editorBody {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px 18px 16px
+}
+
+/* resize handles */
+.ed-rz { position: absolute; z-index: 3; touch-action: none }
+.ed-rz[data-edge="n"] { top: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize }
+.ed-rz[data-edge="s"] { bottom: 0; left: 12px; right: 12px; height: 5px; cursor: ns-resize }
+.ed-rz[data-edge="e"] { right: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize }
+.ed-rz[data-edge="w"] { left: 0; top: 12px; bottom: 12px; width: 5px; cursor: ew-resize }
+.ed-rz[data-edge="ne"] { right: 0; top: 0; width: 12px; height: 12px; cursor: nesw-resize }
+.ed-rz[data-edge="sw"] { left: 0; bottom: 0; width: 12px; height: 12px; cursor: nesw-resize }
+.ed-rz[data-edge="nw"] { left: 0; top: 0; width: 12px; height: 12px; cursor: nwse-resize }
+.ed-rz[data-edge="se"] { right: 0; bottom: 0; width: 12px; height: 12px; cursor: nwse-resize }
+.ed-rz:hover { background: color-mix(in oklab, var(--acc) 35%, transparent) }
+
+aside:not([data-dock="float"]) .ed-rz { display: none }
+aside[data-dock="right"] .ed-rz[data-edge="w"],
+aside[data-dock="left"] .ed-rz[data-edge="e"] { display: block; top: 0; bottom: 0 }
+aside[data-dock="bottom"] .ed-rz[data-edge="n"] { display: block; left: 0; right: 0 }
+
+#editorBody > div:first-child {
     display: flex;
     justify-content: space-between;
     align-items: center
 }
 
-aside > div:first-child button:last-child { color: var(--danger) }
+#editorBody > div:first-child button:last-child { color: var(--danger) }
 
-aside > div:first-child button:last-child:hover {
+#editorBody > div:first-child button:last-child:hover {
     border-color: color-mix(in oklab, var(--danger) 50%, transparent);
     background-color: color-mix(in oklab, var(--danger) 10%, var(--solid))
 }
@@ -104,3 +170,20 @@ aside .dimrow button {
 
 .preview p { margin: 0 0 6px }
 .preview p:last-child { margin: 0 }
+
+/* phones: always a bottom sheet */
+@media (max-width: 640px) {
+    aside, aside[data-dock] {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        bottom: 0 !important;
+        width: auto !important;
+        height: 60vh !important;
+        margin: 0 !important;
+        border-radius: 16px 16px 0 0;
+        z-index: 40
+    }
+    .ed-rz, .ed-head .ed-dockbtn { display: none !important }
+}

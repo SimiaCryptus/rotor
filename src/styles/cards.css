@@ -70,6 +70,39 @@
     background: var(--grad);
     box-shadow: 0 3px 10px -2px color-mix(in oklab, var(--acc) 70%, transparent)
 }
+.card-edit-btn {
+    position: absolute;
+    right: 28px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 11px;
+    padding: 0;
+    opacity: 0;
+    border: 1px solid var(--line2);
+    background: var(--card);
+    color: var(--mut);
+    cursor: pointer;
+    box-shadow: none;
+    transition: opacity .15s ease, color .15s ease, background-color .15s ease, transform .15s ease;
+    z-index: 2;
+}
+.card:hover .card-edit-btn,
+.card:focus-within .card-edit-btn {
+    opacity: 0.85;
+}
+.card-edit-btn:hover {
+    opacity: 1;
+    color: var(--acc);
+    background: var(--solid);
+    border-color: var(--acc);
+    transform: scale(1.1);
+}
+
 
 .card p, .card ul, .card pre, .card h4 { margin: 0 }
 .card ul { padding-left: 18px }

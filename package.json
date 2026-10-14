@@ -10,6 +10,10 @@
      "dev": "node build.mjs --watch",
      "serve:drive": "npx --yes http-server dist/drive -p 8080 -c-1"
   },
+  "dependencies": {
+    "@milkdown/core": "^7.5.0",
+    "@milkdown/crepe": "^7.5.0"
+  },
   "devDependencies": {
     "esbuild": "^0.24.0"
   },
