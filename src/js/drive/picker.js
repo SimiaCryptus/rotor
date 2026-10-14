@@ -17,7 +17,8 @@ export async function pickFile() {
     }));
     const P = window.google.picker;
     return new Promise(resolve => {
-        const types = [MIME, "application/json", "text/html"].join(",");
+         // .rotor files uploaded to Drive usually get a generic binary type, not our MIME.
+         const types = [MIME, "application/octet-stream", "application/json", "text/html"].join(",");
         const mine = new P.DocsView(P.ViewId.DOCS).setMimeTypes(types).setMode(P.DocsViewMode.LIST).setIncludeFolders(true);
         const shared = new P.DocsView(P.ViewId.DOCS).setMimeTypes(types).setMode(P.DocsViewMode.LIST).setEnableDrives(true);
         new P.PickerBuilder()

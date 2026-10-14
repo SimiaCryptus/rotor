@@ -295,7 +295,7 @@ export function initDrive() {
 
     const st = parseState();
     if (st) banner(st.action === "create"
-            ? "Create a new Rotor notebook in Google Drive."
-            : "Open this notebook from Google Drive.",
+             ? "Google Drive asked Rotor to create a new notebook. Connect to continue."
+             : "Google Drive asked Rotor to open a .rotor file. Connect to load it (browsers need a click before the Google sign-in window).",
         "Connect Google Drive", () => handleState(st));
 }

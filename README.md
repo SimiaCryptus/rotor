@@ -67,6 +67,10 @@ The build enforces these constraints, because the app's "Save HTML" depends on t
 `GOOGLE_APP_ID` is the Cloud **project number**. The Picker uses it to grant `drive.file` access to picked files.
 
 Upload `dist/drive/index.html` to any static HTTPS host, at the Open URL configured above. For a local test, run `npm run serve:drive` and open `http://localhost:8080/`.
+`dist/drive/` is a complete static site: `index.html`, `manifest.webmanifest`, `sw.js` and the icons. Upload the whole folder, for example to GitHub Pages, Netlify or an S3 bucket. The Open URL and New URL must point at that folder, e.g. `https://notes.example.com/rotor/`. No server code is involved: Drive opens the page with `?state={"action":"open","ids":[…]}`, and Rotor reads and writes the file directly through the Drive API using your `drive.file` token.
+Notes for static hosting:
+- Don't send `Cross-Origin-Opener-Policy: same-origin`. Use none, or `same-origin-allow-popups`, or the Google sign-in popup can't report back.
+- Uploaded `.rotor` files usually have type `application/octet-stream`. They still show **Open with ▸ Rotor** because the integration matches the `rotor` extension.
 
 ### Using it
 

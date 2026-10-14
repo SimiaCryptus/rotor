@@ -55,12 +55,15 @@ self.addEventListener('fetch', (event) => {
           return networkRes;
         }).catch(() => {
           if (event.request.mode === 'navigate') {
-            return caches.match('./rotor.html');
+             // Drive opens the editor as "<Open URL>?state=…": serve the app shell whatever the query.
+             return caches.match('./rotor.html', {ignoreSearch: true});
           }
           return cached;
         });
 
-        return cached || fetchPromise;
+         // Never answer Drive launch URLs (?state=) from cache: they must reach the live page.
+         if (event.request.mode === 'navigate' && url.search) return fetchPromise;
+         return cached || fetchPromise;
       })
     );
   }

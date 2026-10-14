@@ -113,7 +113,10 @@ async function emit(name) {
 }
 
 const emitAll = () => Promise.all(Object.keys(TARGETS).map(emit));
-// ---- PWA Assets generation (PNG icons, manifest, service worker) ----
+// ---- Static-site assets (PNG icons, manifest, service worker), emitted next to each target ----
+// dist/         → rotor.html (+ PWA assets)
+// dist/drive/   → index.html (+ PWA assets): upload this folder as-is to the Drive "Open URL"
+const SITES = [["dist", "rotor.html"], ["dist/drive", "index.html"]];
 function generatePngIcon(size) {
     const table = new Uint32Array(256);
     for (let i = 0; i < 256; i++) {
@@ -168,17 +171,21 @@ function generatePngIcon(size) {
         chunk("IEND", Buffer.alloc(0))
     ]);
 }
-async function emitPwaAssets() {
-    const distDir = r("dist");
-    await mkdir(distDir, {recursive: true});
-    await Promise.all([
-        copyFile(r("src/pwa/manifest.webmanifest"), r("dist/manifest.webmanifest")),
-        copyFile(r("src/pwa/sw.js"), r("dist/sw.js")),
-        copyFile(r("src/pwa/icon.svg"), r("dist/icon.svg")),
-        writeFile(r("dist/icon-192.png"), generatePngIcon(192)),
-        writeFile(r("dist/icon-512.png"), generatePngIcon(512)),
-    ]);
+async function emitSiteAssets(dir, entry) {
+     const d = r(dir);
+     await mkdir(d, {recursive: true});
+     const sub = s => s.replaceAll("./rotor.html", "./" + entry);
+     const manifest = sub(await readFile(r("src/pwa/manifest.webmanifest"), "utf8"));
+     const sw = sub(await readFile(r("src/pwa/sw.js"), "utf8"));
+     await Promise.all([
+         writeFile(path.join(d, "manifest.webmanifest"), manifest),
+         writeFile(path.join(d, "sw.js"), sw),
+         copyFile(r("src/pwa/icon.svg"), path.join(d, "icon.svg")),
+         writeFile(path.join(d, "icon-192.png"), generatePngIcon(192)),
+         writeFile(path.join(d, "icon-512.png"), generatePngIcon(512)),
+     ]);
 }
+const emitPwaAssets = () => Promise.all(SITES.map(([dir, entry]) => emitSiteAssets(dir, entry)));
 
 
 const collect = (kind, name) => ({
