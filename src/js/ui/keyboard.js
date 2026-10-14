@@ -8,6 +8,7 @@ import {render} from "./render.js";
 import {palOpen} from "./palette.js";
 import {openAgents} from "./agents-panel.js";
 import {flushCellEdit} from "./milkdown.js";
+import {transpose} from "./toolbar.js";
 
 export function initKeyboard() {
     document.addEventListener("keydown", e => {
@@ -28,7 +29,7 @@ export function initKeyboard() {
             e.shiftKey ? redo() : undo();
         } else if (mod && e.key.toLowerCase() === "t") {
             e.preventDefault();
-            $("#transpose").click();
+            transpose();
         } else if (mod && e.key.toLowerCase() === "s") {
             e.preventDefault();
             flushCellEdit(); // pending floating-editor text goes into the save

@@ -3,6 +3,7 @@
 import "./pristine.js";
 import {initStorage} from "./storage.js";
 import {initToolbar} from "./ui/toolbar.js";
+import {initMenubar} from "./ui/menubar.js";
 import {initPalette} from "./ui/palette.js";
 import {initKeyboard} from "./ui/keyboard.js";
 import {initLuminous} from "./ui/luminous.js";
@@ -14,6 +15,7 @@ import {initPwa} from "./pwa.js";
 
 initStorage();
 initToolbar();
+initMenubar();
 initPalette();
 initAgents();
 initKeyboard();

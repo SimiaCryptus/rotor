@@ -1,0 +1,48 @@
+/* ===================== conventional menu bar ===================== */
+.menubar {
+    display: flex;
+    gap: 2px;
+    align-items: center
+}
+
+.menubar > button {
+    border: 1px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-weight: 550
+}
+
+.menubar > button:hover,
+.menubar > button[aria-expanded="true"] {
+    border-color: transparent;
+    background: color-mix(in oklab, var(--acc) 12%, transparent)
+}
+
+.menubar > button:active { transform: none }
+
+#viewName { font-size: 12.5px }
+
+/* menu items: label left, shortcut right */
+.ctxmenu button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 22px
+}
+
+.ctxmenu .ctxlbl {
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.ctxmenu .ctxkbd {
+    flex: none;
+    font-size: 10.5px;
+    color: var(--mut);
+    border: 0;
+    background: none;
+    box-shadow: none;
+    padding: 0
+}

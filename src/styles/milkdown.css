@@ -210,7 +210,7 @@ body.fe-dragging, body.fe-dragging * { user-select: none !important; -webkit-use
     --crepe-color-inline-code: color-mix(in oklab, var(--acc) 72%, var(--fg));
     --crepe-color-error: var(--danger);
     --crepe-color-hover: color-mix(in oklab, var(--acc) 10%, transparent);
-    --crepe-color-selected: color-mix(in oklab, var(--acc) 18%, transparent);
+    --crepe-color-selected: color-mix(in oklab, var(--acc) 42%, transparent);
     --crepe-color-inline-area: color-mix(in oklab, var(--fg) 6%, transparent);
     --crepe-font-title: inherit;
     --crepe-font-default: inherit;
@@ -241,6 +241,22 @@ body.fe-dragging, body.fe-dragging * { user-select: none !important; -webkit-use
 .rotor-md .milkdown .ProseMirror h6 { font-size: 1em; line-height: 1.4; margin: 8px 0 2px; padding: 0 }
 .rotor-md .milkdown .ProseMirror li { line-height: 1.55 }
 .rotor-md .milkdown .ProseMirror blockquote { margin: 6px 0; padding-left: 12px }
+/* Selected text must be unmistakable: it is what the toolbar's formatting applies to. */
+.rotor-md .milkdown .ProseMirror ::selection,
+.rotor-md .milkdown .ProseMirror::selection,
+.fe-src textarea::selection,
+.cell-fallback-editor::selection,
+.side-fallback-editor::selection,
+aside textarea::selection {
+    background: color-mix(in oklab, var(--acc) 45%, transparent) !important;
+    color: inherit
+}
+.rotor-md .milkdown .ProseMirror .ProseMirror-selectednode {
+    outline: 2px solid var(--acc);
+    outline-offset: 2px;
+    border-radius: 4px
+}
+
 
 /* our global control styles must not leak into Crepe's toolbar / menus / link tooltip.
    Crepe's own rules (.milkdown .milkdown-toolbar …) are more specific and still win. */

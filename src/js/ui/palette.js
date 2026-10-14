@@ -14,6 +14,8 @@ import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
 import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive} from "../drive/index.js";
 import {startCellEdit} from "./milkdown.js";
+import {transpose, renameView, deleteActiveView, addDimPrompt, importPrompt} from "./toolbar.js";
+import {exportJSON} from "../io.js";
 const driveCmd = fn => driveAvailable() ? fn()
      : announce("Google Drive is available in the Drive build (dist/drive) served over HTTPS.");
 
@@ -41,7 +43,7 @@ function filterCmd(a) {
 }
 
 const COMMANDS = [
-    ["rotate", "Transpose rows and columns", () => $("#transpose").click()],
+    ["rotate", "Transpose rows and columns", () => transpose()],
     ["rows", "rows <dim> — put a dimension on rows", a => placeDim(a, "Rows")],
     ["cols", "cols <dim> — put a dimension on columns", a => placeDim(a, "Columns")],
     ["filter", "filter <dim> [value] — slice the view", a => filterCmd(a)],
@@ -58,9 +60,9 @@ const COMMANDS = [
     ["unused", "unused <dim> — take a dimension off the view", a => placeDim(a, "Unused")],
     ["view new", "view new [name]", a => newView(a || "New view", false)],
     ["view duplicate", "view duplicate [name]", a => newView(a || activeView().name + " copy", true)],
-    ["view rename", "view rename <name>", a => a ? setView(v => v.name = a) : $("#viewRen").click()],
-    ["view delete", "Delete the current view", () => $("#viewDel").click()],
-    ["dim add", "dim add <name>", a => a ? addDim(a) : $("#dimAdd").click()],
+    ["view rename", "view rename <name>", a => a ? setView(v => v.name = a) : renameView()],
+    ["view delete", "Delete the current view", () => deleteActiveView()],
+    ["dim add", "dim add <name>", a => a ? addDim(a) : addDimPrompt()],
     ["dim delete", "dim delete <dim> — remove a dimension (notes kept)", a => {
         const d = findDim(a);
         d ? deleteDim(d.id) : announce("No dimension “" + a + "”");
@@ -96,8 +98,8 @@ const COMMANDS = [
      ["drive save", "Save to Google Drive (creates a file if needed)", () => driveCmd(() => saveToDrive({manual: true}))],
      ["drive new", "Create a new empty notebook in Google Drive", () => driveCmd(() => createInDrive(null, {fresh: true}))],
      ["drive signout", "Forget the Google Drive access token", () => driveCmd(signOutDrive)],
-    ["export json", "Download rotor.json", () => $("#export").click()],
-    ["import", "Import a rotor.json file", () => $("#import").click()],
+    ["export json", "Download rotor.json", () => exportJSON()],
+    ["import", "Open a .rotor / .json / .html notebook file", () => importPrompt()],
     ["empty", "Toggle showing empty rows/columns", () => setView(w => w.options.showEmpty = !w.options.showEmpty)],
     ["unassigned", "Toggle the — bucket", () => setView(w => w.options.showUnassigned = !w.options.showUnassigned)],
     ["snapshots", "Restore a recoverable snapshot of this notebook", () => restoreSnapshot()],

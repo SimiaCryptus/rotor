@@ -1,18 +1,19 @@
-// Header / footer control wiring.
+// Header / footer controls, and the shared commands the menu bar and palette call.
 import {$, uid, now} from "../util.js";
 import {state, activeView} from "../state.js";
 import {emptyDoc, isDate} from "../model/doc.js";
 import {parseCapture} from "../model/capture.js";
-import {commit, undo, redo, replaceDoc} from "../store.js";
+import {commit, replaceDoc} from "../store.js";
 import {flush, persist} from "../storage.js";
-import {setView, switchView, resetNav} from "../nav.js";
-import {saveHTML, saveRotor, exportJSON, importFile} from "../io.js";
+import {setView, resetNav} from "../nav.js";
+import {importFile} from "../io.js";
 import {isInstalled} from "../pwa.js";
+import {driveAvailable, saveAny} from "../drive/index.js";
 import {render} from "./render.js";
 import {renderGrid} from "./grid.js";
 import {announce} from "./status.js";
 import {addDim, newView} from "./actions.js";
-import {openAgents} from "./agents-panel.js";
+import {flushCellEdit} from "./milkdown.js";
 
 export function deleteActiveView() {
     const doc = state.doc;
@@ -23,59 +24,63 @@ export function deleteActiveView() {
     persist();
     render();
 }
-export function updateSaveButton() {
-    const btn = $("#save");
-    if (!btn) return;
-    if (isInstalled()) {
-        btn.textContent = "Save .rotor";
-        btn.title = "Save .rotor (Ctrl/Cmd+S)";
-    } else {
-        btn.textContent = "Save HTML";
-        btn.title = "Save HTML (Ctrl/Cmd+S)";
+
+export const transpose = () => setView(v => [v.rows, v.cols] = [v.cols, v.rows]);
+
+export function newViewPrompt() {
+    const n = prompt("Name for this view (current layout is copied)", activeView().name + " copy");
+    if (n) newView(n, true);
+}
+
+export function renameView() {
+    const n = prompt("Rename view", activeView().name);
+    if (n) setView(v => v.name = n);
+}
+
+export const addDimPrompt = () => addDim(prompt("Dimension name (e.g. Person)"));
+export const importPrompt = () => $("#importFile").click();
+
+export function startEmpty() {
+    if (confirm("Start a new empty notebook? (The current one stays in browser storage.)")) {
+        flush();
+        replaceDoc(emptyDoc());
     }
 }
 
+export function renameTitle() {
+    const n = prompt("Notebook title", state.doc.title);
+    if (n) commit(D => D.title = n);
+}
+
+export function updateSaveButton() {
+    const btn = $("#save");
+    if (!btn) return;
+    if (driveAvailable()) {
+        btn.textContent = "Save to Drive";
+        btn.title = "Save to Google Drive (Ctrl/Cmd+S)";
+    } else if (isInstalled()) {
+        btn.textContent = "Save .rotor file";
+        btn.title = "Save the notebook as a .rotor file (Ctrl/Cmd+S)";
+    } else {
+        btn.textContent = "Save as HTML file";
+        btn.title = "Download a self-contained copy: the app plus your notes (Ctrl/Cmd+S)";
+    }
+}
 
 export function initToolbar() {
-    $("#viewSel").onchange = e => switchView(e.target.value);
-    $("#viewNew").onclick = () => {
-        const n = prompt("View name", "New view");
-        if (n) newView(n, true);
-    };
-    $("#viewRen").onclick = () => {
-        const n = prompt("Rename view", activeView().name);
-        if (n) setView(v => v.name = n);
-    };
-    $("#viewDel").onclick = deleteActiveView;
-    $("#transpose").onclick = () => setView(v => [v.rows, v.cols] = [v.cols, v.rows]);
-    $("#undo").onclick = () => undo();
-    $("#redo").onclick = () => redo();
-    $("#dimAdd").onclick = () => addDim(prompt("Dimension name (e.g. Person)"));
-     $("#aiBtn").onclick = () => openAgents();
-    $("#docTitle").ondblclick = () => {
-        const n = prompt("Notebook title", state.doc.title);
-        if (n) commit(D => D.title = n);
-    };
+    $("#docTitle").ondblclick = renameTitle;
     $("#search").oninput = e => {
         state.searchTerm = e.target.value;
         renderGrid();
     };
     $("#save").onclick = () => {
-        if (isInstalled()) saveRotor();
-        else saveHTML();
+        flushCellEdit();
+        saveAny();
     };
     updateSaveButton();
-    $("#export").onclick = exportJSON;
-    $("#import").onclick = () => $("#importFile").click();
     $("#importFile").onchange = async e => {
         await importFile(e.target.files[0]);
         e.target.value = "";
-    };
-    $("#empty").onclick = () => {
-        if (confirm("Start a new empty notebook? (The current one stays in browser storage.)")) {
-            flush();
-            replaceDoc(emptyDoc());
-        }
     };
     $("#capture").addEventListener("keydown", e => {
         if (e.key !== "Enter" || !e.target.value.trim()) return;
@@ -83,8 +88,8 @@ export function initToolbar() {
         commit(D => {
             const {content, coords} = parseCapture(D, text);
             const v = D.views.find(w => w.id === D.activeView);
-             for (const [d, sel] of Object.entries(v.pages || {}))
-                 if (sel.length === 1 && sel[0] != null && !coords[d] && !isDate(D, d)) coords[d] = [sel[0]];
+            for (const [d, sel] of Object.entries(v.pages || {}))
+                if (sel.length === 1 && sel[0] != null && !coords[d] && !isDate(D, d)) coords[d] = [sel[0]];
             D.items.push({id: uid("i"), content, coords, created: now(), modified: now()});
         });
         e.target.value = "";

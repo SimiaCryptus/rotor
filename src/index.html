@@ -13,33 +13,13 @@
 </head>
 <body>
 <header>
-    <span class="logo" aria-hidden="true"></span><span class="title brand">Rotor</span><span class="sep" aria-hidden="true">/</span><span
-        id="docTitle" class="title" title="Double-click to rename"></span>
-    <div class="group">
-        <select id="viewSel" aria-label="View"></select>
-        <button id="viewNew">+ view</button>
-        <button id="viewRen">rename</button>
-        <button id="viewDel">delete</button>
-    </div>
-    <div class="group">
-        <button id="transpose" title="Ctrl/Cmd+T">⇄ transpose</button>
-        <button id="undo" title="Undo (Ctrl/Cmd+Z)" aria-label="Undo">↶</button>
-        <button id="redo" title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo">↷</button>
-    </div>
-    <button id="dimAdd">+ dimension</button>
-     <button id="aiBtn" title="Agents — bring your own key (Ctrl/Cmd+J)">✦ agents</button>
+    <nav id="menubar" class="menubar" role="menubar" aria-label="Main menu"></nav>
+    <span class="sep" aria-hidden="true">·</span>
+    <span id="docTitle" class="title" title="Notebook title — double-click to rename"></span>
+    <span id="viewName" class="muted"></span>
     <span class="spacer"></span>
-    <input id="search" placeholder="Search" aria-label="Search">
-     <div class="group" id="driveGroup" hidden>
-         <button id="driveOpen" title="Open a notebook from Google Drive">Open from Drive</button>
-         <button id="driveSave" title="Save to Google Drive (Ctrl/Cmd+S)">Save to Drive</button>
-     </div>
-    <div class="group">
-        <button id="export">Export JSON</button>
-        <button id="import">Import</button>
-        <button id="empty">Start empty</button>
-    </div>
-    <button id="save" title="Ctrl/Cmd+S">Save HTML</button>
+    <input id="search" placeholder="Search notes" aria-label="Search notes">
+    <button id="save" title="Ctrl/Cmd+S">Save</button>
     <input id="importFile" type="file" accept=".rotor,.json,application/json,application/vnd.rotor+json" hidden>
 </header>
 <div class="shelves" id="shelves"></div>

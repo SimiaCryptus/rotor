@@ -266,9 +266,7 @@ async function handleState(st) {
 
 export function initDrive() {
     if (!driveAvailable()) return;
-    $("#driveGroup").hidden = false;
-    $("#driveOpen").onclick = openFromDrive;
-    $("#driveSave").onclick = () => saveToDrive({manual: true});
+    // Drive commands live in the File menu (ui/menubar.js) and the palette.
     loadGis().catch(() => {
     });
     preloadPicker();
