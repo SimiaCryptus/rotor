@@ -1,6 +1,6 @@
 // Cognotik agent settings, optional API key, consent and run log — a store separate from documents (§8.4, §9.1).
 // Prefix "rotorai:" never collides with document keys ("rotor:<id>") and is never serialized.
-import {DEFAULT_URL, DEFAULT_PROVIDERS} from "../../../cognotik-example/cognotik-client.mjs";
+import {DEFAULT_URL, DEFAULT_PROVIDERS} from "../../cognotik-client.mjs";
 
 const SKEY = "rotorai:cognotik", KKEY = "rotorai:cognotik:key", LOGKEY = "rotorai:log", CKEY = "rotorai:consent:cognotik";
 // Settings from the multi-provider era; removed once (their keys are unreachable now anyway).

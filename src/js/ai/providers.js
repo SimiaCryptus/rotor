@@ -1,6 +1,6 @@
 // The one wire Rotor's agents speak: the Cognotik hosted API proxy.
 // The protocol (submit → poll, auth, retries) lives in cognotik-example/cognotik-client.mjs.
-import {textPart, extractText} from "../../../cognotik-example/cognotik-client.mjs";
+import {textPart, extractText} from "../../cognotik-client.mjs";
 import {getClient, noteAuthFailure} from "./cognotik.js";
 
 export async function complete(settings, system, messages, {signal, onStatus, client, maxTokens = 4096} = {}) {

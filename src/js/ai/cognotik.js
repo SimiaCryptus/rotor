@@ -1,7 +1,7 @@
 // Cognotik connection: one shared CognotikClient, model list cache, connection state and pop-up sign-in.
 import {
     CognotikClient, ModelCache, isTextModel, chooseDefaultModel, providerName, formatTokens
-} from "../../../cognotik-example/cognotik-client.mjs";
+} from "../../cognotik-client.mjs";
 import {loadSettings, saveSettings, getKey, DEFAULTS} from "./keys.js";
 
 export {providerName, formatTokens};
