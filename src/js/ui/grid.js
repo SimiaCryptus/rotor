@@ -12,9 +12,11 @@ import {render} from "./render.js";
 import {announce} from "./status.js";
 import {openMenu} from "./contextmenu.js";
 import {startCellEdit, getActiveCellEditId} from "./milkdown.js";
+import {attachNote} from "./describe.js";
 import {
      addValue, renameValue, deleteValue, moveValue, assignValue, mergeValue,
-     createIn, moveItem, removeFromCell, deleteItem, filterOnly, filterHide, clearDimFilters
+      createIn, moveItem, removeFromCell, deleteItem, filterOnly, filterHide, clearDimFilters,
+      editValueNote, editDimNote
 } from "./actions.js";
 
 const RENDER_CAP = 2000;
@@ -26,6 +28,16 @@ function createAndEdit(addr) {
 
 export function headerLabel(dims, tuple) {
     return tuple.map((v, i) => valLabel(state.doc, dims[i], v)).join(" › ") || "(all)";
+}
+// Descriptions of every level of a header (value notes), as Markdown.
+function headerNote(dims, tuple) {
+     const doc = state.doc, parts = [];
+     tuple.forEach((vid, i) => {
+         if (vid == null || isDate(doc, dims[i])) return;
+         const val = dimOf(doc, dims[i])?.values.find(x => x.id === vid);
+         if (val?.note) parts.push(tuple.length > 1 ? `**${val.label}** — ${val.note}` : val.note);
+     });
+     return parts.join("\n\n");
 }
 const notes = n => n + " note" + (n === 1 ? "" : "s");
 // Notes visible under a row/column header in the current projection.
@@ -62,6 +74,12 @@ function headerMenu(e, isRow, dims, tuple) {
           ...clearItems,
           filterItems.length && "-",
          editable && {label: "Rename…", action: () => renameValue(did, vid)},
+          editable && {
+              label: `“${val}” description…`, action: () => editValueNote(did, vid)
+          },
+          did != null && {
+              label: `${dimOf(doc, did)?.name} description…`, action: () => editDimNote(did)
+          },
          editable && {
              label: "Merge with…", disabled: !others.length, subtitle: `Merge “${val}” into`,
              hint: `Move every note from “${val}” into another ${dimOf(doc, did).name} value`,
@@ -81,13 +99,14 @@ function headerCell(cls, dims, tuple, count) {
     const th = h("th", {
             class: cls,
             scope: cls === "rh" ? "row" : "col",
-             title: "Double-click to rename · right-click for options · drop a note to assign",
+              title: headerNote(dims, tuple) ? false : "Double-click to rename · right-click for options · drop a note to assign",
             "aria-label": `${headerLabel(dims, tuple)}, ${count} items`,
              "aria-haspopup": "menu",
             ondblclick: () => last >= 0 && renameValue(dims[last], tuple[last]),
              oncontextmenu: e => headerMenu(e, cls === "rh", dims, tuple)
         },
         headerLabel(dims, tuple), " ", h("span", {class: "n"}, String(count)));
+     attachNote(th, () => headerNote(dims, tuple));
     // Drop item onto header: assign that value, keep other coordinates (§7)
     if (last >= 0 && tuple[last] != null) {
         const did = dims[last], vid = tuple[last];

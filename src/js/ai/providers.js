@@ -1,44 +1,28 @@
-// Wire adapters: OpenAI-compatible Chat Completions and Anthropic Messages. fetch is injectable.
-import {PRESETS} from "./keys.js";
+// The one wire Rotor's agents speak: the Cognotik hosted API proxy.
+// The protocol (submit → poll, auth, retries) lives in cognotik-example/cognotik-client.mjs.
+import {textPart, extractText} from "../../../cognotik-example/cognotik-client.mjs";
+import {getClient, noteAuthFailure} from "./cognotik.js";
 
-async function readJSON(res) {
-    if (!res.ok) {
-        let t = "";
-        try {
-            t = await res.text();
-        } catch {
+export async function complete(settings, system, messages, {signal, onStatus, client, maxTokens = 4096} = {}) {
+    const parts = c => typeof c === "string" ? [textPart(c)] : c;
+    const req = {
+        model: settings.model, temperature: 0.2, max_tokens: maxTokens,
+        messages: [{role: "system", content: parts(system)},
+            ...messages.map(m => ({role: m.role, content: parts(m.content)}))],
+    };
+    let resp;
+    try {
+        resp = await (client || getClient()).chat(req, {signal, onStatus});
+    } catch (e) {
+        if (e?.auth) {
+            noteAuthFailure(e.message);
+            throw new Error("Not signed in to Cognotik — open Agents ▸ Account to sign in or add an API key.");
         }
-        throw new Error(`provider error ${res.status}: ${t.slice(0, 300)}`);
+        throw e;
     }
-    return res.json();
-}
-
-export async function complete(settings, key, system, messages, {signal, fetchFn, maxTokens = 4096} = {}) {
-    const f = fetchFn || ((...a) => fetch(...a));
-    const wire = PRESETS[settings.provider]?.wire || "openai";
-    if (wire === "anthropic") {
-        const j = await readJSON(await f(settings.endpoint, {
-            method: "POST", signal,
-            headers: {
-                "content-type": "application/json",
-                "x-api-key": key,
-                "anthropic-version": "2023-06-01",
-                "anthropic-dangerous-direct-browser-access": "true",
-            },
-            body: JSON.stringify({model: settings.model, max_tokens: maxTokens, temperature: 0.2, system, messages}),
-        }));
-        return {
-            text: (j.content || []).filter(b => b.type === "text").map(b => b.text).join(""),
-            usage: {in: j.usage?.input_tokens || 0, out: j.usage?.output_tokens || 0},
-        };
-    }
-    const headers = {"content-type": "application/json"};
-    if (key) headers.authorization = "Bearer " + key;
-    const body = {model: settings.model, temperature: 0.2, messages: [{role: "system", content: system}, ...messages]};
-    if (settings.endpoint.includes("api.openai.com")) body.response_format = {type: "json_object"};
-    const j = await readJSON(await f(settings.endpoint, {method: "POST", signal, headers, body: JSON.stringify(body)}));
+    const u = resp?.usage || {};
     return {
-        text: j.choices?.[0]?.message?.content || "",
-        usage: {in: j.usage?.prompt_tokens || 0, out: j.usage?.completion_tokens || 0},
+        text: extractText(resp),
+        usage: {in: Number(u.prompt_tokens) || 0, out: Number(u.completion_tokens) || 0, cost: Number(u.cost) || 0},
     };
 }

@@ -14,7 +14,7 @@ import {palOpen} from "./palette.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 import {encryptScope, unlockPrompt, lockAll} from "./locks.js";
 import {startCellEdit, flushCellEdit} from "./milkdown.js";
-import {moveDim, renameDim, deleteDim, deleteItem, clearAllFilters} from "./actions.js";
+import {moveDim, renameDim, deleteDim, deleteItem, clearAllFilters, editDimNote} from "./actions.js";
 import {AGENTS} from "../ai/agents.js";
 import {
     transpose, newViewPrompt, renameView, deleteActiveView, addDimPrompt,
@@ -109,6 +109,7 @@ function dimMenu() {
                 {label: "Remove from view", action: () => moveDim(d.id, "Unused", 0)},
                 "-",
                 {label: "Rename…", action: () => renameDim(d.id)},
+                 {label: "Description…", action: () => editDimNote(d.id)},
                 {label: "Delete…", danger: true, action: () => deleteDim(d.id)},
             ]
         })),
@@ -121,7 +122,7 @@ function agentMenu() {
         "-",
         ...Object.entries(AGENTS).map(([id, a]) => ({label: a.name + "…", hint: a.desc, action: () => openAgents(id)})),
         "-",
-        {label: "Provider and API key…", action: openAgentSettings},
+        {label: "Cognotik account & model…", action: openAgentSettings},
         {label: "Run log", action: openAgentLog},
     ];
 }

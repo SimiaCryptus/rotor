@@ -4,9 +4,10 @@ import {state, activeView} from "../state.js";
 import {dimOf, valueObjs, valLabel, coordsOf} from "../model/doc.js";
 import {GRANS} from "../model/dates.js";
 import {setView} from "../nav.js";
-import {moveDim, deleteDim, setKind, renameDim, mergeDim, removeFilter} from "./actions.js";
+import {moveDim, deleteDim, setKind, renameDim, mergeDim, removeFilter, editDimNote} from "./actions.js";
 import {encryptItems, decryptItems} from "./locks.js";
 import {openMenu} from "./contextmenu.js";
+import {attachNote} from "./describe.js";
 
 const notes = n => n + " note" + (n === 1 ? "" : "s");
 
@@ -19,6 +20,7 @@ function chipMenu(e, id) {
      const others = isDateDim ? [] : doc.dimensions.filter(x => x.id !== id && x.kind !== "date");
      openMenu(e, [
          {label: "Rename…", action: () => renameDim(id)},
+          {label: d.note ? "Edit description…" : "Add description…", action: () => editDimNote(id)},
          isDateDim
              ? {
                  label: "Granularity…", submenu: () => GRANS.map(g => ({
@@ -121,10 +123,11 @@ function chip(id, shelfName) {
     const c = h("span", {
         class: "chip", draggable: "true",
          "aria-haspopup": "menu",
-        title: d.kind === "date"
+         title: d.note ? false : d.kind === "date"
              ? `date (${d.granularity || "week"} of ${d.source || "created"}) · drag to rotate · double-click to rename · Alt-click to change granularity · right-click for options`
              : `${d.kind} · drag to rotate · double-click to rename · Alt-click to toggle ordinal · right-click for options`
     });
+     attachNote(c, () => dimOf(state.doc, id)?.note);
     c.addEventListener("dragstart", e => e.dataTransfer.setData("text/rotor-dim", id));
      c.addEventListener("contextmenu", e => chipMenu(e, id));
     c.addEventListener("click", e => {

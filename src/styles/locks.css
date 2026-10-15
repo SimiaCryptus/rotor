@@ -85,3 +85,20 @@
      font-size: 12px;
      padding: 3px 10px;
 }
+/* ---- dimension / value descriptions ---- */
+.note-tip {
+      position: fixed;
+      z-index: 80;
+      max-width: 340px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      pointer-events: none;
+      background: var(--solid);
+      border: 1px solid var(--line2);
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+}
+.note-tip p, .note-tip ul, .note-tip pre, .note-tip h4 { margin: 0 0 4px }
+.note-tip > :last-child { margin-bottom: 0 }
+.note-tip ul { padding-left: 18px }
+.note-desc-box { width: 560px }

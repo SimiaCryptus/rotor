@@ -10,7 +10,8 @@ import {isInstalled} from "../pwa.js";
 import {renderGrid} from "./grid.js";
 import {announce, status} from "./status.js";
 import {addDim, newView, moveDim, deleteDim, setKind, filterHide, clearAllFilters} from "./actions.js";
-import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
+import {openAgents, openAgentSettings, openAgentLog, signInToCognotik} from "./agents-panel.js";
+import {setModel} from "../ai/cognotik.js";
 import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
 import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive} from "../drive/index.js";
 import {startCellEdit} from "./milkdown.js";
@@ -141,7 +142,14 @@ const COMMANDS = [
      ["ai expand", "Expander — elaborate the selected note", () => openAgents("expander", "note")],
      ["ai reduce", "Reducer — tighten a note or condense a cell", () => openAgents("reducer")],
      ["ai map", "Mapper — propose a new dimension by meaning", () => openAgents("mapper")],
-     ["ai settings", "Agent provider, model and key", () => openAgentSettings()],
+     ["ai settings", "Cognotik account, model and API key", () => openAgentSettings()],
+     ["ai signin", "Sign in to Cognotik so agents can run", () => signInToCognotik()],
+     ["ai model", "ai model <id> — set the Cognotik model for agents", a => {
+         const id = (a || "").trim();
+         if (!id) return openAgentSettings();
+         setModel(id);
+         announce("Agent model: " + id);
+     }],
      ["ai log", "Agent run log (metadata only)", () => openAgentLog()],
 ];
 

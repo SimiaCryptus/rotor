@@ -26,7 +26,8 @@ const JS_SLOT = "/*@rotor:js*/";
 const CSP_SLOT = "@rotor:csp";
 const DATA_TAG = '<script type="application/json" id="rotor-data"></script>';
 
-const AI_HOSTS = "https://api.openai.com https://api.anthropic.com http://localhost:* http://127.0.0.1:*";
+// Agents speak only to Cognotik (hosted, or a self-hosted server on localhost).
+const AI_HOSTS = "https://cognotik.com https://*.cognotik.com http://localhost:* http://127.0.0.1:*";
 const MILKDOWN_HOSTS = "https://esm.sh https://cdn.jsdelivr.net https://unpkg.com";
 
 const CSP_STANDALONE = [

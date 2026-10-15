@@ -32,14 +32,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Bypass caching for AI providers, Google Drive APIs, and local models
+  // Bypass caching for the Cognotik API proxy and Google Drive APIs
   if (
-    url.hostname.includes('api.openai.com') ||
-    url.hostname.includes('api.anthropic.com') ||
+    url.hostname.includes('cognotik.com') ||
     url.hostname.includes('googleapis.com') ||
     url.hostname.includes('google.com') ||
     url.hostname.includes('gstatic.com') ||
-    url.port === '11434'
+    url.pathname.startsWith('/api-proxy/')
   ) {
     return;
   }

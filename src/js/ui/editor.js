@@ -11,6 +11,7 @@ import {openAgents} from "./agents-panel.js";
 import {AGENTS} from "../ai/agents.js";
 import {plaintextOf, unlock, lockItem, encryptItems, removeEncryption} from "./locks.js";
 import {createMilkdownEditor, startCellEdit, stopCellEdit, getActiveCellEditId} from "./milkdown.js";
+import {attachNote} from "./describe.js";
 
 // The side panel's Crepe instance; destroyed before every rebuild (it used to leak one per render).
 let sideEd = null;
@@ -119,10 +120,10 @@ export function renderEditor() {
                 h("button", {onclick: () => openAgents("classifier", "note")}, "Classify…"))];
     }
     const dims = doc.dimensions.map(d => d.kind === "date"
-        ? h("div", {class: "dimrow"}, h("b", {}, d.name + ": "), itemBucket(d, it) || "—",
+         ? h("div", {class: "dimrow"}, attachNote(h("b", {}, d.name + ": "), () => d.note), itemBucket(d, it) || "—",
             h("span", {class: "muted"}, ` (from ${d.source || "created"})`))
-        : h("div", {class: "dimrow"}, h("b", {}, d.name + ": "),
-            d.values.map(val => h("label", {}, h("input", {
+         : h("div", {class: "dimrow"}, attachNote(h("b", {}, d.name + ": "), () => d.note),
+             d.values.map(val => attachNote(h("label", {}, h("input", {
                 type: "checkbox", checked: (it.coords[d.id] || []).includes(val.id),
                 onchange: e => commit(D => {
                     const x = D.items.find(y => y.id === it.id);
@@ -130,7 +131,7 @@ export function renderEditor() {
                     s = e.target.checked ? [...s, val.id] : s.filter(v => v !== val.id);
                     if (s.length) x.coords[d.id] = s; else delete x.coords[d.id];
                 })
-            }), " " + val.label)),
+             }), " " + val.label), () => val.note)),
             h("button", {onclick: () => addValue(d.id)}, "+")));
     // placements in the current view (§10.5)
     const placements = [];

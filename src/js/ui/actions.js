@@ -7,6 +7,27 @@ import {commit} from "../store.js";
 import {setView, switchView, resetNav} from "../nav.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
+import {editNoteDialog} from "./describe.js";
+// Optional Markdown descriptions on dimensions and values (shown on hover).
+export function editDimNote(did) {
+     const d = dimOf(state.doc, did);
+     if (!d) return;
+     editNoteDialog(`Description of “${d.name}”`, d.note, md => commit(D => {
+         const x = dimOf(D, did);
+         if (!x) return;
+         if (md) x.note = md; else delete x.note;
+     }));
+}
+export function editValueNote(did, vid) {
+     if (vid == null || isDate(state.doc, did)) return announce("Only stored values can have a description.");
+     const val = dimOf(state.doc, did)?.values.find(v => v.id === vid);
+     if (!val) return;
+     editNoteDialog(`Description of “${val.label}”`, val.note, md => commit(D => {
+         const x = dimOf(D, did)?.values.find(v => v.id === vid);
+         if (!x) return;
+         if (md) x.note = md; else delete x.note;
+     }));
+}
 
 export function addDim(n) {
     n = (n || "").trim();
@@ -130,6 +151,7 @@ export function mergeDim(id, targetId) {
              if (ex) map.set(v.id, ex.id);
              else {
                  const nv = {id: uid("v"), label: v.label};
+                  if (v.note) nv.note = v.note;
                  td.values.push(nv);
                  map.set(v.id, nv.id);
              }

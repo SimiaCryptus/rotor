@@ -14,6 +14,14 @@ Build commands:
     npm run build        # → both files (minified)
     npm run build:debug  # → both files (readable)
     npm run dev          # rebuild on every change in src/
+## Documentation
+Detailed documentation lives in [`doc/`](doc/README.md):
+- [Features](doc/features.md): a tour of everything Rotor can do
+- [Data model](doc/model.md) and [Views & projection](doc/views.md)
+- [Agents](doc/agents.md) and [Encryption](doc/crypto.md)
+- [Storage & files](doc/storage.md), [Google Drive](doc/drive.md) and [PWA](doc/pwa.md)
+- [Shortcuts & commands](doc/shortcuts.md), [Security & privacy](doc/security.md) and [Architecture](doc/architecture.md)
+
 
 ## How the build works
 
@@ -24,9 +32,19 @@ The build enforces these constraints, because the app's "Save HTML" depends on t
 - `src/js/pristine.js` must be the **first** import in `main.js`. It snapshots `document.documentElement.outerHTML` before anything touches the DOM.
 - `<script type="application/json" id="rotor-data"></script>` must appear before the app script.
 - App code is inline. The Content Security Policy is generated per target:
-  - **standalone:** only the AI provider hosts are reachable;
+  - **standalone:** only Cognotik (`*.cognotik.com`, or `localhost` for a self-hosted server) is reachable;
   - **Drive build:** additionally `accounts.google.com/gsi`, `apis.google.com` (Picker) and `www.googleapis.com` (Drive API).
 - CSS cascade order is the `@import` order in `styles/index.css`. `luminous.css` must stay last.
+
+## Agents (Cognotik)
+
+Agents run through the Cognotik hosted API proxy. The protocol is not duplicated: `src/js/ai/` imports `cognotik-example/cognotik-client.mjs` and esbuild bundles it.
+
+- **Connect:** open *Agents ▸ Account* and click **Sign in to Cognotik**. A Cognotik window opens. Rotor detects the session as soon as you are signed in.
+- **API key (optional):** paste a Cognotik API key (sent as `X-API-Key`) if your browser blocks third-party cookies, or when running from `file://`.
+- **Models:** model dropdowns are filled from `/api-proxy/models/{providers}` and grouped by upstream provider. Use the palette (`/ai model <id>`) or the dropdown on the agents screen to switch.
+- **Server:** a self-hosted Cognotik on `localhost` works too (*Advanced ▸ Server*).
+- For cookie sign-in from another origin, the Cognotik server must answer CORS with `Access-Control-Allow-Credentials: true` for Rotor's origin. Its session cookie must also be `SameSite=None; Secure`.
 
 ## Google Drive app
 

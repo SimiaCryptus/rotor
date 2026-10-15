@@ -1,79 +1,103 @@
-// AI settings, keys and run log — a store separate from documents (§8.4, §9.1).
+// Cognotik agent settings, optional API key, consent and run log — a store separate from documents (§8.4, §9.1).
 // Prefix "rotorai:" never collides with document keys ("rotor:<id>") and is never serialized.
-const SKEY = "rotorai:settings", KKEY = "rotorai:key:", LOGKEY = "rotorai:log", CKEY = "rotorai:consent:";
+import {DEFAULT_URL, DEFAULT_PROVIDERS} from "../../../cognotik-example/cognotik-client.mjs";
 
-export const PRESETS = {
-    openai: {label: "OpenAI", wire: "openai", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-4o-mini"},
-    anthropic: {
-        label: "Anthropic", wire: "anthropic",
-        endpoint: "https://api.anthropic.com/v1/messages", model: "claude-3-5-haiku-latest"
-    },
-    local: {
-        label: "Local (Ollama / LM Studio)", wire: "openai",
-        endpoint: "http://localhost:11434/v1/chat/completions", model: "llama3.1", noKey: true
-    },
-};
+const SKEY = "rotorai:cognotik", KKEY = "rotorai:cognotik:key", LOGKEY = "rotorai:log", CKEY = "rotorai:consent:cognotik";
+// Settings from the multi-provider era; removed once (their keys are unreachable now anyway).
+const LEGACY = [
+    "rotorai:settings", "rotorai:key:openai", "rotorai:key:anthropic", "rotorai:key:local", "rotorai:key:cognotik",
+    "rotorai:consent:openai", "rotorai:consent:anthropic", "rotorai:consent:local", "rotorai:consent:cognotik",
+];
 
-// Must match connect-src in index.html's CSP.
-export const ALLOWED_ENDPOINT = /^(https:\/\/api\.openai\.com|https:\/\/api\.anthropic\.com|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)\//;
+export const UPSTREAMS = DEFAULT_PROVIDERS;
+export const DEFAULTS = {baseUrl: DEFAULT_URL, model: "claude-sonnet-4", providers: [...DEFAULT_PROVIDERS]};
 
-const sessionKeys = {};
+// Must match connect-src in the CSP (build.mjs).
+export const ALLOWED_BASE = /^(https:\/\/([a-z0-9-]+\.)*cognotik\.com|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/i;
+
+export const normalizeBase = u => String(u || "").trim().replace(/\/api-proxy.*$/, "").replace(/\/+$/, "");
+
+const sessionKey = {value: null};
 export const isFileOrigin = () => location.protocol === "file:";
 
-export function loadSettings() {
-    const def = {provider: "openai", endpoint: PRESETS.openai.endpoint, model: PRESETS.openai.model};
+let migrated = false;
+
+function migrateLegacy() {
+    if (migrated) return;
+    migrated = true;
     try {
-        const s = {...def, ...JSON.parse(localStorage.getItem(SKEY) || "{}")};
-        return PRESETS[s.provider] ? s : def;
+        const old = JSON.parse(localStorage.getItem("rotorai:settings") || "null");
+        const oldKey = localStorage.getItem("rotorai:key:cognotik");
+        if (oldKey && !localStorage.getItem(KKEY)) localStorage.setItem(KKEY, oldKey);
+        if (old?.provider === "cognotik" && !localStorage.getItem(SKEY))
+            localStorage.setItem(SKEY, JSON.stringify({baseUrl: normalizeBase(old.endpoint), model: old.model}));
+        if (localStorage.getItem("rotorai:consent:cognotik") && !localStorage.getItem(CKEY))
+            localStorage.setItem(CKEY, localStorage.getItem("rotorai:consent:cognotik"));
+        for (const k of LEGACY) if (k !== CKEY) localStorage.removeItem(k);
     } catch {
-        return def;
     }
+}
+
+export function loadSettings() {
+    migrateLegacy();
+    let s;
+    try {
+        s = {...DEFAULTS, ...JSON.parse(localStorage.getItem(SKEY) || "{}")};
+    } catch {
+        s = {...DEFAULTS};
+    }
+    s.baseUrl = normalizeBase(s.baseUrl) || DEFAULTS.baseUrl;
+    if (!ALLOWED_BASE.test(s.baseUrl)) s.baseUrl = DEFAULTS.baseUrl;
+    s.providers = Array.isArray(s.providers) ? s.providers.filter(p => UPSTREAMS.includes(p)) : [];
+    if (!s.providers.length) s.providers = [...DEFAULTS.providers];
+    s.model = typeof s.model === "string" ? s.model : "";
+    return s;
 }
 
 export function saveSettings(s) {
     try {
-        localStorage.setItem(SKEY, JSON.stringify({provider: s.provider, endpoint: s.endpoint, model: s.model}));
+        localStorage.setItem(SKEY, JSON.stringify({baseUrl: s.baseUrl, model: s.model, providers: s.providers}));
     } catch {
     }
 }
 
-export function getKey(provider) {
-    if (sessionKeys[provider]) return sessionKeys[provider];
+export function getKey() {
+    if (sessionKey.value) return sessionKey.value;
     try {
-        return localStorage.getItem(KKEY + provider) || null;
+        return localStorage.getItem(KKEY) || null;
     } catch {
         return null;
     }
 }
 
-export function isRemembered(provider) {
+export function isRemembered() {
     try {
-        return !!localStorage.getItem(KKEY + provider);
+        return !!localStorage.getItem(KKEY);
     } catch {
         return false;
     }
 }
 
-export function setKey(provider, key, remember) {
-    sessionKeys[provider] = key || null;
+export function setKey(key, remember) {
+    sessionKey.value = key || null;
     try {
-        if (key && remember) localStorage.setItem(KKEY + provider, key);
-        else localStorage.removeItem(KKEY + provider);
+        if (key && remember) localStorage.setItem(KKEY, key);
+        else localStorage.removeItem(KKEY);
     } catch {
     }
 }
 
-export function hasConsent(provider) {
+export function hasConsent() {
     try {
-        return !!localStorage.getItem(CKEY + provider);
+        return !!localStorage.getItem(CKEY);
     } catch {
         return false;
     }
 }
 
-export function giveConsent(provider) {
+export function giveConsent() {
     try {
-        localStorage.setItem(CKEY + provider, new Date().toISOString());
+        localStorage.setItem(CKEY, new Date().toISOString());
     } catch {
     }
 }

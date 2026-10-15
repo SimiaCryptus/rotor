@@ -36,7 +36,7 @@ function parseJSON(text) {
     return JSON.parse(t.slice(a, b + 1));
 }
 
-export async function runAgent({doc, agentId, items, ctx, settings, key, signal, onProgress, fetchFn, timeoutMs = 120000}) {
+export async function runAgent({doc, agentId, items, ctx, settings, signal, onProgress, client, timeoutMs = 300000}) {
     const agent = AGENTS[agentId];
     const {aliases, data} = buildPayload(doc, items);
     const system = SYSTEM + "\n\nTask: " + agent.task(ctx) + "\n\nJSON shape:\n" + agent.schema;
@@ -47,18 +47,22 @@ export async function runAgent({doc, agentId, items, ctx, settings, key, signal,
     const tctl = new AbortController(), timer = setTimeout(() => tctl.abort(), timeoutMs);
     const onAbort = () => tctl.abort();
     signal?.addEventListener("abort", onAbort);
-    const usage = {in: 0, out: 0};
+    const usage = {in: 0, out: 0, cost: 0};
     const log = outcome => appendLog({
-        at: now(), agent: agentId, provider: settings.provider, model: settings.model,
-        items: items.length, tokensIn: usage.in, tokensOut: usage.out, outcome,
+        at: now(), agent: agentId, provider: "cognotik", model: settings.model,
+        items: items.length, tokensIn: usage.in, tokensOut: usage.out, cost: usage.cost, outcome,
     });
     let lastErr;
     try {
         for (let attempt = 0; attempt < 2; attempt++) {
-            onProgress?.(attempt ? "Output was invalid — retrying once…" : `Sending ${items.length} notes to ${settings.model}…`);
-            const r = await complete(settings, key, system, messages, {signal: tctl.signal, fetchFn});
+            onProgress?.(attempt ? "Output was invalid — retrying once…" : `Sending ${items.length} notes to ${settings.model} via Cognotik…`);
+            const r = await complete(settings, system, messages, {
+                signal: tctl.signal, client,
+                onStatus: st => onProgress?.(`${settings.model}: ${st}…`),
+            });
             usage.in += r.usage.in;
             usage.out += r.usage.out;
+            usage.cost += r.usage.cost || 0;
             onProgress?.("Validating proposal…");
             try {
                 const changes = validateProposal(parseJSON(r.text), agentId, vctx);

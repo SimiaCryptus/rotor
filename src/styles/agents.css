@@ -85,6 +85,24 @@ del { background: color-mix(in oklab, var(--danger) 18%, transparent) }
 .ai-log li { margin: 4px 0 }
 
 .ai-strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px }
+.ai-conn {
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line2);
+    border-radius: 12px;
+    font-size: 12.5px
+}
+.ai-conn.ok { border-color: color-mix(in oklab, #2fe6b7 55%, var(--line2)) }
+.ai-conn.auth, .ai-conn.error { background: color-mix(in oklab, var(--acc) 7%, transparent) }
+.ai-conn .muted { margin-top: 4px }
+.ai-conn button { padding: 2px 9px; font-size: 12px }
+.ai-ok { color: color-mix(in oklab, #2fe6b7 70%, var(--fg)); font-weight: 650 }
+.ai-model { flex: 1; display: flex; gap: 6px; min-width: 0 }
+.ai-model select { flex: 1; min-width: 0 }
+#aiModel { flex: 1; display: flex; min-width: 0 }
+.ai-ups { flex: 1; display: flex; flex-wrap: wrap; gap: 4px 12px }
+.ai-up { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px }
+
 
 .card .prov {
     position: absolute;
