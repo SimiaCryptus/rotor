@@ -44,6 +44,19 @@ Connection states shown in the panel: `unknown` → `checking` → `ok`, or `aut
 | **Critic** | Finds contradictions, tensions and duplicated ideas. Read-only by construction. | view, cell | findings; each becomes a note only if you accept it |
 | **Mapper** | Proposes one brand-new categorical dimension (a new "way to rotate by meaning") and assigns every note. | view, cell | one new dimension with values and assignments |
 | **Planner** | Needs a goal. Builds 3–8 ordered steps as a new **ordinal** dimension with one note per step, plus a suggested view with the steps on columns. | view, cell, note | new dimension, new notes on it, a view suggestion |
+### Structure agents
+These work on the *shape* of the notebook. Full details in [new-agents.md](new-agents.md).
+| Agent | What it does | Scopes | May propose |
+|---|---|---|---|
+| **Architect** | Designs dimensions, values, starter views and a few seed notes from a description. Sends no note text. Modes: new notebook, extend schema. | schema | `newDimensions`, `newViews`, `newItems` (placed with `at`) |
+| **Extender** | Adds a value (or completes a thin one) and writes notes so its slice matches its siblings'. *Fill* mode completes gaps on every value. Each note copies an exemplar's coordinates (`like`); a coverage report and *Run again for missing shapes* follow. | slice | `newValues` (target dimension), `newItems` |
+| **Populator** | Fills the schema with notes: sample data, a brief, pasted source text, or "more like my notes". | schema, doc sample | `newValues` (≤ 10), `newItems` (placed with `at`) |
+| **Tidier** | Normalizes messy values on one dimension. Renaming onto an existing label merges. Empty values stay for you to delete. | dimension | `renameValues`, `assign` |
+| **Viewsmith** | Designs up to 5 saved views for a question, from labels and per-value counts only. | schema | `newViews` |
+| **Describer** | Writes the dimension/value descriptions shown in tooltips (optionally rewriting existing ones, shown as a diff). | schema + samples, schema | `describe` |
+| **Analyst** | Answers a question about the notes in scope, with citations. Read-only; optionally saved as a note. | view, cell, note | `answer` |
+In review, unticking a new dimension or value also unticks (and greys out) every note, assignment and view that depends on it. New notes show the cell address they will land in.
+
 
 ### Scopes
 
@@ -99,6 +112,13 @@ The system prompt tells the model that note contents are untrusted data and must
   | critic | `findings` |
   | mapper | `newDimension` |
   | planner | `newDimension`, `newItems`, `view` |
+  | architect | `newDimensions`, `newViews`, `newItems` |
+  | extender | `newValues`, `newItems` |
+  | populator | `newValues`, `newItems` |
+  | tidier | `renameValues`, `assign` |
+  | viewsmith | `newViews` |
+  | describer | `describe` |
+  | analyst | `answer` |
 
   Any non-empty use of another change key is an error.
 - **Deletion is not expressible**: any key containing `delete` or `remove` is rejected outright.
@@ -143,3 +163,5 @@ Older multi-provider settings are migrated once and then removed.
 ## Palette commands
 
 `/ai synthesize`, `/ai classify <dim>`, `/ai plan "goal"`, `/ai critique`, `/ai expand`, `/ai reduce`, `/ai map`, `/ai settings`, `/ai signin`, `/ai model <id>`, `/ai log`.
+
+Structure agents: `/ai design "goal"`, `/ai extend <dim> [value]`, `/ai fill [dim]`, `/ai populate "brief"`, `/ai populate sample <n> [topic]`, `/ai ingest`, `/ai tidy <dim>`, `/ai views "question"`, `/ai describe`, `/ai ask "question"`.

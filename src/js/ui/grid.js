@@ -13,6 +13,7 @@ import {announce} from "./status.js";
 import {openMenu} from "./contextmenu.js";
 import {startCellEdit, getActiveCellEditId} from "./milkdown.js";
 import {attachNote} from "./describe.js";
+import {openAgents} from "./agents-panel.js";
 import {
      addValue, renameValue, deleteValue, moveValue, assignValue, mergeValue,
       createIn, moveItem, removeFromCell, deleteItem, filterOnly, filterHide, clearDimFilters,
@@ -80,6 +81,16 @@ function headerMenu(e, isRow, dims, tuple) {
           did != null && {
               label: `${dimOf(doc, did)?.name} description…`, action: () => editDimNote(did)
           },
+          did != null && !isDate(doc, did) && "-",
+          editable && {
+              label: "Fill like siblings…", hint: `Extender: write notes so “${val}” looks like the other ${dimOf(doc, did).name} values`,
+              action: () => openAgents("extender", "slice", {dim: did, mode: "extend", value: val})
+          },
+          did != null && !isDate(doc, did) && {
+              label: `Tidy ${dimOf(doc, did)?.name} values…`, hint: "Tidier: normalize messy values",
+              action: () => openAgents("tidier", "dimension", {dim: did})
+          },
+          did != null && {label: "Describe with AI…", action: () => openAgents("describer")},
          editable && {
              label: "Merge with…", disabled: !others.length, subtitle: `Merge “${val}” into`,
              hint: `Move every note from “${val}” into another ${dimOf(doc, did).name} value`,

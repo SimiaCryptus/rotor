@@ -123,3 +123,4 @@ Typing a full command name followed by an argument runs it. Otherwise the input 
 ### Agents
 
 `/ai synthesize`, `/ai classify <dim>`, `/ai plan "goal"`, `/ai critique`, `/ai expand`, `/ai reduce`, `/ai map`, `/ai settings`, `/ai signin`, `/ai model <id>`, `/ai log`. See [agents.md](agents.md).
+Structure agents: `/ai design "goal"`, `/ai extend <dim> [value]`, `/ai fill [dim]`, `/ai populate "brief"`, `/ai populate sample <n>`, `/ai ingest`, `/ai tidy <dim>`, `/ai views "question"`, `/ai describe`, `/ai ask "question"`. See [new-agents.md](new-agents.md).

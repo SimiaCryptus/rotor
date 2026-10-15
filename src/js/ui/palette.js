@@ -19,6 +19,7 @@ import {transpose, renameView, deleteActiveView, addDimPrompt, importPrompt} fro
 import {exportJSON} from "../io.js";
 const driveCmd = fn => driveAvailable() ? fn()
      : announce("Google Drive is available in the Drive build (dist/drive) served over HTTPS.");
+const unq = s => (s || "").trim().replace(/^"|"$/g, "");
 
 const findDim = s => {
     s = (s || "").trim().toLowerCase();
@@ -142,6 +143,28 @@ const COMMANDS = [
      ["ai expand", "Expander — elaborate the selected note", () => openAgents("expander", "note")],
      ["ai reduce", "Reducer — tighten a note or condense a cell", () => openAgents("reducer")],
      ["ai map", "Mapper — propose a new dimension by meaning", () => openAgents("mapper")],
+     ["ai design", "ai design \"goal\" — Architect: design dimensions, values and views", a => openAgents("architect", "", {goal: unq(a)})],
+     ["ai extend", "ai extend <dim> [value] — Extender: add a value and fill its slice like its siblings", a => {
+         const [dn, ...rest] = (a || "").trim().split(/\s+/), d = findDim(dn);
+         openAgents("extender", "slice", {mode: "extend", ...(d ? {dim: d.id} : {}), value: unq(rest.join(" "))});
+     }],
+     ["ai fill", "ai fill [dim] — Extender: fill gaps so every value looks like its siblings", a => {
+         const d = findDim(a);
+         openAgents("extender", "slice", {mode: "fill", ...(d ? {dim: d.id} : {})});
+     }],
+     ["ai populate", "ai populate \"brief\" | sample <n> [topic] — Populator: fill the schema with notes", a => {
+         const t = (a || "").trim(), m = t.match(/^sample(?:\s+(\d+))?\s*(.*)$/i);
+         if (m) openAgents("populator", "", {mode: "sample", count: m[1] ? +m[1] : undefined, goal: unq(m[2])});
+         else openAgents("populator", "", {mode: "brief", goal: unq(t)});
+     }],
+     ["ai ingest", "Populator — break pasted text into placed notes", () => openAgents("populator", "", {mode: "ingest"})],
+     ["ai tidy", "ai tidy <dim> — Tidier: normalize messy values", a => {
+         const d = findDim(a);
+         openAgents("tidier", "dimension", d ? {dim: d.id} : {});
+     }],
+     ["ai views", "ai views \"question\" — Viewsmith: design saved views for a question", a => openAgents("viewsmith", "", {goal: unq(a)})],
+     ["ai describe", "Describer — write descriptions for dimensions and values", () => openAgents("describer")],
+     ["ai ask", "ai ask \"question\" — Analyst: answer from your notes, with citations", a => openAgents("analyst", "", {goal: unq(a)})],
      ["ai settings", "Cognotik account, model and API key", () => openAgentSettings()],
      ["ai signin", "Sign in to Cognotik so agents can run", () => signInToCognotik()],
      ["ai model", "ai model <id> — set the Cognotik model for agents", a => {

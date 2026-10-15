@@ -8,6 +8,7 @@ import {moveDim, deleteDim, setKind, renameDim, mergeDim, removeFilter, editDimN
 import {encryptItems, decryptItems} from "./locks.js";
 import {openMenu} from "./contextmenu.js";
 import {attachNote} from "./describe.js";
+import {openAgents} from "./agents-panel.js";
 
 const notes = n => n + " note" + (n === 1 ? "" : "s");
 
@@ -37,6 +38,10 @@ function chipMenu(e, id) {
              hint: `Fold ${d.name}'s values and assignments into another dimension`,
              submenu: () => others.map(x => ({label: x.name, action: () => mergeDim(id, x.id)}))
          },
+         "-",
+         !isDateDim && {label: "Tidy values…", hint: "Tidier: normalize messy values", action: () => openAgents("tidier", "dimension", {dim: id})},
+         !isDateDim && {label: "Fill gaps like siblings…", hint: "Extender: complete thin values", action: () => openAgents("extender", "slice", {dim: id, mode: "fill"})},
+         {label: "Describe with AI…", action: () => openAgents("describer")},
          "-",
          {label: `Encrypt ${notes(plainN)} with a ${d.name}…`, disabled: !plainN, action: () => encryptItems(ids)},
          {label: `Decrypt ${notes(encN)} with a ${d.name}…`, disabled: !encN, action: () => decryptItems(ids)},

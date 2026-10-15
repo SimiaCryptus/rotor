@@ -112,3 +112,9 @@ del { background: color-mix(in oklab, var(--danger) 18%, transparent) }
     font-weight: 700;
     color: var(--acc)
 }
+/* new agents (doc/new-agents.md) */
+.ai-row > textarea { flex: 1; font-family: var(--mono); font-size: 12px; resize: vertical }
+.ai-change.ai-blocked { opacity: .45 }
+.ai-cites { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 6px; font-size: 12px }
+.ai-cites button { padding: 1px 8px; font-size: 11.5px; border-radius: 999px }
+.ai-preview > div + div { margin-top: 6px }

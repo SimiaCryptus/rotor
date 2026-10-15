@@ -1,8 +1,13 @@
-# New agents (design proposal)
+# New agents
 
-> **Status: design only.** Nothing on this page is implemented.
-> It extends [agents.md](agents.md), which describes the seven existing agents, and reuses its pipeline unchanged:
+> **Status: implemented.** Code: `model/slices.js`, `model/proposals.js`, `ai/agents.js`, `ai/runner.js`, `ui/agents-panel.js`.
+> It extends [agents.md](agents.md), which describes the original seven agents, and reuses its pipeline unchanged:
 > *scope → one request → JSON → validator → dry run → review → one `commit`.*
+>
+> Implementation notes, where the code refines this design:
+> - Architect's *New notebook* mode is offered on an empty notebook (or the starter). It may reuse an existing dimension that has **no values and no notes** by proposing the same name; anything else with an existing name is rejected.
+> - Tidier merges move notes (the old value is taken off each in-scope note and the canonical one added), so the old value really ends up empty. Its `assign` entries may carry `"from": "<label>"` to move one note between values.
+> - Duplicate notes (Populator, Extender) are skipped with a warning rather than rejecting the whole proposal.
 
 The existing agents work **on notes**: classify them, expand them, merge them. The agents below work **on the shape of the notebook**: its dimensions, its values and its coverage. They create structure and fill it in.
 

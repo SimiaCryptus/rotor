@@ -117,10 +117,16 @@ function dimMenu() {
 }
 
 function agentMenu() {
+    const item = id => ({label: AGENTS[id].name + "…", hint: AGENTS[id].desc, action: () => openAgents(id)});
+    const ids = g => Object.keys(AGENTS).filter(id => (AGENTS[id].group || "notes") === g);
     return [
         {label: "Open agents…", kbd: MOD + "J", action: () => openAgents()},
         "-",
-        ...Object.entries(AGENTS).map(([id, a]) => ({label: a.name + "…", hint: a.desc, action: () => openAgents(id)})),
+        ...ids("notes").map(item),
+        "-",
+        {label: "Organize", subtitle: "Organize", submenu: () => ids("organize").map(item)},
+        {label: "Generate", subtitle: "Generate", submenu: () => ids("generate").map(item)},
+        ...ids("ask").map(item),
         "-",
         {label: "Cognotik account & model…", action: openAgentSettings},
         {label: "Run log", action: openAgentLog},
