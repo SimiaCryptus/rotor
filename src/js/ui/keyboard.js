@@ -37,9 +37,12 @@ export function initKeyboard() {
         } else if (mod && e.key.toLowerCase() === "j") {
             e.preventDefault();
             openAgents();
-        } else if (e.key === "Escape") {
+         } else if (e.key === "Escape" && !e.defaultPrevented) {
+             // The floating editor handles its own Escape; this closes the side panel.
+             const id = state.selectedId;
             state.selectedId = null;
             render();
+             if (id) document.querySelector(`.card[data-id="${CSS.escape(id)}"]`)?.focus();
         } else if (!typing && !mod && e.key.toLowerCase() === "n") {
             e.preventDefault();
             $("#capture").focus();

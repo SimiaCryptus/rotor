@@ -1,6 +1,8 @@
 // Item editor panel (#editor): floating, resizable, dockable left / right / bottom.
 // Layout is a UI preference stored per browser, never part of the notebook.
 import {$, h} from "../util.js";
+import {state} from "../state.js";
+import {render} from "./render.js";
 
 const KEY = "rotorui:panel";
 const DEF = {dock: "right", lastDock: "right", x: null, y: null, w: 420, h: 540, side: 360, bottom: 320};
@@ -153,6 +155,16 @@ export function initPanel() {
         return el;
     });
     ed.replaceChildren(head, h("div", {id: "editorBody"}), ...handles);
+     // Esc anywhere inside the panel dismisses it (unless e.g. Crepe's menu consumed it).
+     ed.addEventListener("keydown", e => {
+         if (e.key !== "Escape" || e.defaultPrevented) return;
+         e.preventDefault();
+         e.stopPropagation();
+         const id = state.selectedId;
+         state.selectedId = null;
+         render();
+         if (id) document.querySelector(`.card[data-id="${CSS.escape(id)}"]`)?.focus();
+     });
     applyPanel();
     addEventListener("resize", applyPanel);
 }

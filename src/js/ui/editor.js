@@ -1,5 +1,5 @@
 // Item editor side panel.
-import {$, h, now} from "../util.js";
+import {$, h, now, uid} from "../util.js";
 import {state, activeView} from "../state.js";
 import {itemBucket} from "../model/dates.js";
 import {renderMarkdown} from "../model/markdown.js";
@@ -21,6 +21,13 @@ function dropSide() {
     sideEd = null;
     p?.then(e => e?.destroy()).catch(() => {});
 }
+// Focus the side panel's editor (Crepe or textarea) once it is mounted.
+export function focusSideEditor() {
+     const p = sideEd;
+     if (p) p.then(e => e?.focus()).catch(() => {});
+     else $("#editorBody textarea")?.focus();
+}
+
 
 export function renderEditor() {
     const doc = state.doc;
@@ -122,17 +129,7 @@ export function renderEditor() {
     const dims = doc.dimensions.map(d => d.kind === "date"
          ? h("div", {class: "dimrow"}, attachNote(h("b", {}, d.name + ": "), () => d.note), itemBucket(d, it) || "—",
             h("span", {class: "muted"}, ` (from ${d.source || "created"})`))
-         : h("div", {class: "dimrow"}, attachNote(h("b", {}, d.name + ": "), () => d.note),
-             d.values.map(val => attachNote(h("label", {}, h("input", {
-                type: "checkbox", checked: (it.coords[d.id] || []).includes(val.id),
-                onchange: e => commit(D => {
-                    const x = D.items.find(y => y.id === it.id);
-                    let s = x.coords[d.id] || [];
-                    s = e.target.checked ? [...s, val.id] : s.filter(v => v !== val.id);
-                    if (s.length) x.coords[d.id] = s; else delete x.coords[d.id];
-                })
-             }), " " + val.label), () => val.note)),
-            h("button", {onclick: () => addValue(d.id)}, "+")));
+          : h("div", {class: "dimrow"}, attachNote(h("b", {}, d.name + ": "), () => d.note), dimSelect(d, it)));
     // placements in the current view (§10.5)
     const placements = [];
     const p = state.lastProj;
@@ -156,7 +153,7 @@ export function renderEditor() {
             it.enc ? null : h("button", {onclick: () => encryptItems([it.id])}, "🔒 Encrypt"), " ",
             h("button", {onclick: () => deleteItem(it.id)}, "Delete note")),
         ...body,
-        h("h4", {}, "Coordinates"), dims,
+         h("h4", {}, "Coordinates"), ...dims,
         h("h4", {}, "Placements in this view"),
         placements.length ? h("ul", {}, placements)
             : h("p", {class: "muted"}, "Not visible in this view (filtered, searched or unassigned hidden)."),
@@ -164,4 +161,39 @@ export function renderEditor() {
             `✦ Drafted by ${AGENTS[it.provenance.agent]?.name || it.provenance.agent} (${it.provenance.model || "?"})` +
             (it.provenance.edited ? " · edited since" : "")) : null,
         h("p", {class: "muted"}, `Created ${new Date(it.created).toLocaleString()} · modified ${new Date(it.modified).toLocaleString()}`));
+}
+// One dropdown per non-date dimension: "—", each value, "+ New value…".
+function dimSelect(d, it) {
+     const cur = it.coords[d.id] || [];
+     const opt = (value, label, selected) => h("option", {value, selected: !!selected}, label);
+     const opts = [opt("", "—", !cur.length)];
+     if (cur.length > 1) opts.push(opt("__multi", "(multiple: " + cur.map(v =>
+         d.values.find(x => x.id === v)?.label ?? "?").join(", ") + ")", true));
+     for (const v of d.values) opts.push(opt(v.id, v.label, cur.length === 1 && cur[0] === v.id));
+     opts.push(opt("__new", "+ New value…"));
+     const setCoord = (D, vid) => {
+         const x = D.items.find(y => y.id === it.id);
+         if (!x) return;
+         if (vid) x.coords[d.id] = [vid]; else delete x.coords[d.id];
+         x.modified = now();
+     };
+     return h("select", {
+         "aria-label": d.name,
+         onchange: e => {
+             const v = e.target.value;
+             if (v === "__multi") return;
+             if (v === "__new") {
+                 const label = prompt("New value for " + d.name)?.trim();
+                 if (!label) return render();
+                 const ex = d.values.find(x => x.label.toLowerCase() === label.toLowerCase());
+                 const id = ex ? ex.id : uid("v");
+                 return commit(D => {
+                     const dd = D.dimensions.find(x => x.id === d.id);
+                     if (!ex) dd.values.push({id, label});
+                     setCoord(D, id);
+                 });
+             }
+             commit(D => setCoord(D, v || null));
+         }
+     }, opts);
 }

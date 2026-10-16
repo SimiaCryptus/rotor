@@ -43,7 +43,11 @@ export const importPrompt = () => $("#importFile").click();
 export function startEmpty() {
     if (confirm("Start a new empty notebook? (The current one stays in browser storage.)")) {
         flush();
+         // forget the open file so saving the new notebook can't overwrite it
+         state.lastSaveFile = null;
+         state.lastRotorFile = null;
         replaceDoc(emptyDoc());
+         resetNav();
     }
 }
 
@@ -73,10 +77,11 @@ export function initToolbar() {
         state.searchTerm = e.target.value;
         renderGrid();
     };
-    $("#save").onclick = () => {
-        flushCellEdit();
-        saveAny();
-    };
+     const saveBtn = $("#save");
+     if (saveBtn) saveBtn.onclick = () => {
+         flushCellEdit();
+         saveAny();
+     };
     updateSaveButton();
     $("#importFile").onchange = async e => {
         await importFile(e.target.files[0]);

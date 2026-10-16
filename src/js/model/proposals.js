@@ -19,6 +19,7 @@ export const ALLOW = {
     viewsmith: ["newViews"],
     describer: ["describe"],
     analyst: ["answer"],
+    importer: ["newDimensions", "newViews", "newItems"],
 };
 export const LIMITS = {
     default: {items: 50, newValues: Infinity, dims: 0, dimValues: [1, 20], views: 0},
@@ -28,10 +29,11 @@ export const LIMITS = {
     populator: {items: 100, newValues: 10},
     tidier: {items: 0, newValues: 0},
     viewsmith: {items: 0, views: 5},
+    importer: {items: 100, dims: 6, dimValues: [1, 30], views: 5, newValues: 0},
 };
 const limitsOf = a => ({...LIMITS.default, ...(LIMITS[a] || {})});
 // Only these agents may name coordinates directly ("at").
-const AT_AGENTS = new Set(["architect", "populator"]);
+const AT_AGENTS = new Set(["architect", "populator", "importer"]);
 
 const jclone = o => JSON.parse(JSON.stringify(o));
 export const firstLine = s => (s || "").split("\n").find(l => l.trim())?.replace(/^#+\s*/, "").slice(0, 90) || "(empty)";
@@ -148,7 +150,7 @@ export function validateProposal(raw, agentId, ctx) {
             let adopt = null;
             if (ex) {
                 const unused = !(ex.values || []).length && !doc.items.some(i => (i.coords[ex.id] || []).length);
-                if (ctx.mode === "new" && unused) adopt = ex.id;
+                if ((ctx.mode === "new" || agentId === "importer") && unused) adopt = ex.id;
                 else throw new Error(`dimension "${name}" already exists; choose a new name`);
             }
             const vals = arr(nd.values, `${name}.values`).map(v => typeof v === "string" ? {label: v} : v);
@@ -175,6 +177,10 @@ export function validateProposal(raw, agentId, ctx) {
             changes.push(dim);
         }
     }
+    // ---- notebook title (Importer) ----
+    if (agentId === "importer" && typeof raw.title === "string" && raw.title.trim())
+        changes.push({type: "title", title: raw.title.trim().slice(0, 120)});
+
 
     // ---- one new dimension (Mapper, Planner) ----
     let newDim = null;
@@ -456,7 +462,7 @@ export function validateProposal(raw, agentId, ctx) {
 
 // Apply accepted changes to a draft document. References to unaccepted/missing values are dropped.
 export function applyChanges(D, changes, prov) {
-    const order = {newDim: 0, newValue: 1, rename: 2, newItem: 3, finding: 3, answer: 3, rewrite: 3, assign: 4, describe: 5, newView: 6};
+    const order = {newDim: 0, newValue: 1, rename: 2, newItem: 3, finding: 3, answer: 3, rewrite: 3, assign: 4, describe: 5, newView: 6, title: 7};
     const dim = id => D.dimensions.find(d => d.id === id);
     const valid = (did, v) => !!dim(did)?.values.some(x => x.id === v);
     const clean = co => {
@@ -496,6 +502,8 @@ export function applyChanges(D, changes, prov) {
                 }
                 D.dimensions.push(nd);
             }
+        } else if (c.type === "title") {
+            D.title = c.title;
         } else if (c.type === "newValue") {
             const d = dim(c.did);
             if (!d || d.kind === "date" || d.values.some(v => v.label.toLowerCase() === c.label.toLowerCase())) continue;

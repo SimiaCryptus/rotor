@@ -23,6 +23,7 @@ export async function complete(settings, system, messages, {signal, onStatus, cl
     const u = resp?.usage || {};
     return {
         text: extractText(resp),
+         finish: resp?.choices?.[0]?.finish_reason || "",
         usage: {in: Number(u.prompt_tokens) || 0, out: Number(u.completion_tokens) || 0, cost: Number(u.cost) || 0},
     };
 }

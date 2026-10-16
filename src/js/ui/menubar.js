@@ -14,6 +14,8 @@ import {palOpen} from "./palette.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
 import {encryptScope, unlockPrompt, lockAll} from "./locks.js";
 import {startCellEdit, flushCellEdit} from "./milkdown.js";
+import {focusSideEditor} from "./editor.js";
+import {render} from "./render.js";
 import {moveDim, renameDim, deleteDim, deleteItem, clearAllFilters, editDimNote} from "./actions.js";
 import {AGENTS} from "../ai/agents.js";
 import {
@@ -53,7 +55,9 @@ function editMenu() {
         "-",
         {label: "New note (quick capture)", kbd: "N", action: () => $("#capture").focus()},
         {label: "Edit selected note", kbd: "Enter", disabled: !sel || !!sel.enc,
-            action: () => startCellEdit(sel.id, document.querySelector(`.card[data-id="${CSS.escape(sel.id)}"]`))},
+             action: () => { render(); focusSideEditor(); }},
+         {label: "Edit selected note in pop-out window", disabled: !sel || !!sel.enc,
+             action: () => startCellEdit(sel.id, document.querySelector(`.card[data-id="${CSS.escape(sel.id)}"]`))},
         {label: "Delete selected note", kbd: "Shift+Del", danger: true, disabled: !sel, action: () => deleteItem(sel.id)},
         "-",
         {label: "Find in notes", action: () => $("#search").focus()},

@@ -158,6 +158,7 @@ const COMMANDS = [
          else openAgents("populator", "", {mode: "brief", goal: unq(t)});
      }],
      ["ai ingest", "Populator — break pasted text into placed notes", () => openAgents("populator", "", {mode: "ingest"})],
+     ["ai import", "Importer — build a whole new notebook from pasted text", () => openAgents("importer", "schema")],
      ["ai tidy", "ai tidy <dim> — Tidier: normalize messy values", a => {
          const d = findDim(a);
          openAgents("tidier", "dimension", d ? {dim: d.id} : {});

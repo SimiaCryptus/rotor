@@ -13,12 +13,14 @@ import {
     providerName, formatTokens, hostOf, setModel
 } from "../ai/cognotik.js";
 import {applyChanges, sharedCoords, firstLine} from "../model/proposals.js";
-import {assertInvariants, dimOf, isDate} from "../model/doc.js";
+import {assertInvariants, dimOf, isDate, emptyDoc} from "../model/doc.js";
 import {cellAddress, project} from "../model/project.js";
 import {sliceScope, coverage, shapeLabel, sampleEven} from "../model/slices.js";
 import {renderMarkdown} from "../model/markdown.js";
-import {commit} from "../store.js";
-import {setView} from "../nav.js";
+import {commit, replaceDoc} from "../store.js";
+import {setView, resetNav} from "../nav.js";
+import {flush} from "../storage.js";
+import {download} from "../io.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
 import {headerLabel} from "./grid.js";
@@ -27,7 +29,25 @@ const P = {
     agent: "classifier", scope: "", dim: "", goal: "", value: "", source: "", mode: "", count: 20, rewriteDesc: false,
     extraShapes: null, ctrl: null, res: null, msg: "", view: "", refresh: null
 };
+let lastReport = null;
+function downloadReport() {
+     if (!lastReport) return;
+     const stamp = lastReport.at.replace(/[:.]/g, "-");
+     download(`rotor-agent-bug-${lastReport.agent}-${stamp}.json`, JSON.stringify(lastReport, null, 2), "application/json");
+     announce("Bug report downloaded.");
+}
 const box = () => $("#agentsBox");
+// replaceChildren() stringifies arrays and nulls ("[object …]", "null"): flatten and filter first.
+const fill = (...kids) => box().replaceChildren(...kids.flat(Infinity).filter(x => x != null && x !== false));
+// Blank base document for agents that build a whole notebook (Importer).
+function freshDoc() {
+    const d = emptyDoc();
+    d.dimensions = [];
+    d.views[0].rows = [];
+    d.views[0].cols = [];
+    d.views[0].name = "Default";
+    return d;
+}
 const isOpen = () => $("#agents").classList.contains("open");
 let prevFocus = null;
 
@@ -303,10 +323,13 @@ function renderSetup() {
             ? `Sent to ${hostOf()}: only dimension and value labels (and their descriptions) — no note text.`
             : `Sent to ${hostOf()}: only note text and dimension labels; IDs are replaced by aliases.`) +
         (flag(A.needsSource) ? " The pasted source text is sent too." : "") + " Proposals are reviewed before anything changes.";
-    box().replaceChildren(
+    fill(
         head("✦ Agents"),
         connBox(),
         P.msg ? h("p", {class: "ai-warn"}, P.msg) : null,
+         P.msg && lastReport ? h("div", {class: "ai-strip"},
+             h("button", {type: "button", onclick: downloadReport}, "⬇ Download bug report"),
+             h("span", {class: "muted"}, "Includes the prompt (note text, pasted source), the raw reply and error details — no API key.")) : null,
         row("Agent", h("select", {
             onchange: e => {
                 P.agent = e.target.value;
@@ -379,7 +402,8 @@ function emptiedValues(before, after, did) {
 }
 
 async function run() {
-    const doc = state.doc, s = loadSettings(), A = AGENTS[P.agent];
+    const s = loadSettings(), A = AGENTS[P.agent];
+    const doc = A.fresh ? freshDoc() : state.doc;
     const cur = scopes().find(x => x.id === P.scope);
     if (!cur) return;
     const stop = m => {
@@ -408,10 +432,11 @@ async function run() {
         missingShapes: P.extraShapes || cur.missingText || [], payload: A.payload
     };
     const ctrl = P.ctrl = new AbortController();
+     lastReport = null;
     P.view = "running";
     P.refresh = null;
     const prog = h("p", {class: "ai-prog"}, "Starting…");
-    box().replaceChildren(head("✦ " + A.name + " running"), prog,
+    fill(head("✦ " + A.name + " running"), prog,
         h("div", {class: "ai-actions"}, h("button", {onclick: () => ctrl.abort()}, "Abort (Esc)")));
     announce(A.name + " running.");
     try {
@@ -420,7 +445,7 @@ async function run() {
             onProgress: t => prog.textContent = t
         });
         const prov = {agent: P.agent, model: "cognotik/" + s.model, at: now()};
-        const D = clone(state.doc);
+        const D = clone(A.fresh ? doc : state.doc);
         applyChanges(D, res.changes, prov);
         assertInvariants(D); // dry run (§8.2)
         for (const c of res.changes) {
@@ -436,12 +461,14 @@ async function run() {
             extra.covDim = td?.name;
         }
         if (P.agent === "tidier") extra.emptied = emptiedValues(state.doc, D, P.dim);
+        if (A.fresh) extra.base = doc;
         P.res = {...res, prov, ...extra};
         if (isOpen()) renderReview();
         const nv = res.changes.filter(c => c.type === "newValue").length;
         announce(`${A.name} proposed ${res.changes.length} changes${nv ? `, ${nv} new values` : ""}.`);
     } catch (e) {
         P.msg = ctrl.signal.aborted ? "Aborted — no proposal." : "⚠ " + e.message;
+         lastReport = e.report || null;
         announce(P.msg);
         if (isOpen()) renderSetup();
     } finally {
@@ -473,12 +500,15 @@ function diffWords(a, b) {
 const GROUPS = [["newDim", "New dimensions"], ["newValue", "New values ⚑"], ["rename", "Renamed values"],
     ["newItem", "New notes"], ["assign", "Coordinate changes"], ["rewrite", "Content rewrites"],
     ["describe", "Descriptions"], ["newView", "New views"], ["finding", "Findings"], ["answer", "Answer"],
-    ["view", "Suggested view"]];
+    ["view", "Suggested view"], ["title", "Notebook title"]];
+const KIND_TAG = {newDim: "new dimension", newValue: "new value", rename: "rename", newItem: "new note",
+    assign: "assign", rewrite: "rewrite", describe: "description", newView: "new view", finding: "finding",
+    answer: "answer", view: "view", title: "title"};
 
 function renderReview() {
     P.view = "review";
     P.refresh = null;
-    const {changes, prov, usage, warnings = [], coverage: cov, covDim, emptied} = P.res, doc = state.doc, A = AGENTS[prov.agent];
+    const {changes, prov, usage, warnings = [], coverage: cov, covDim, emptied, base} = P.res, doc = base || state.doc, A = AGENTS[prov.agent];
     const newDim = id => changes.find(c => c.type === "newDim" && c.id === id);
     const dimName = id => newDim(id)?.name ?? dimOf(doc, id)?.name ?? "?";
     const valName = (d, v) => {
@@ -576,6 +606,8 @@ function renderReview() {
             h("div", {class: "muted"}, "Tick to save this answer as a note" +
                 (Object.keys(c.coords).length ? " at " + coordText(c.coords) : "") + ".")];
         else if (c.type === "view") d = [`Rows: ${c.rows.map(dimName).join(", ") || "—"} · Columns: ${c.cols.map(dimName).join(", ") || "—"}`];
+        else if (c.type === "title") d = [editable(c, "title")];
+        else d = [h("code", {}, JSON.stringify(c))];
         const cb = h("input", {
             type: "checkbox", checked: c.on, "aria-label": c.type === "answer" ? "Save answer as a note" : "Include this change",
             onchange: e => {
@@ -584,7 +616,9 @@ function renderReview() {
                 refreshDeps();
             }
         });
-        const el = h("div", {class: "ai-change"}, cb, h("div", {class: "ai-detail"}, d));
+        const el = h("div", {class: "ai-change"}, cb, h("div", {class: "ai-detail"},
+            h("span", {class: "muted", style: "font-size:10.5px;text-transform:uppercase;letter-spacing:.08em"}, KIND_TAG[c.type] || c.type),
+            h("div", {}, d)));
         rows.push({c, cb, el});
         return el;
     };
@@ -593,16 +627,17 @@ function renderReview() {
         return cs.length ? h("section", {}, h("h4", {}, `${title} (${cs.length})`), cs.map(changeEl)) : null;
     });
     const generated = changes.some(c => c.type === "newItem" || c.type === "answer") &&
-        ["architect", "extender", "populator", "analyst", "expander", "synthesizer", "planner"].includes(prov.agent);
+        ["architect", "extender", "populator", "analyst", "expander", "synthesizer", "planner", "importer"].includes(prov.agent);
     const anyMissing = cov?.some(cv => cv.missingLabels.length);
     const rerun = () => {
         P.extraShapes = cov.flatMap(cv => cv.missingLabels.map(l => `${cv.label}: ${l}`));
         P.res = null;
         run();
     };
-    box().replaceChildren(
+    fill(
         head("✦ " + A.name + " — review"),
         h("p", {class: "muted"}, `${changes.length} proposed changes · ${usage.in + usage.out} tokens${money(usage.cost)}. Nothing has changed yet.`),
+        base ? h("p", {class: "muted"}, "Accepting opens this as a new notebook; the current one stays in browser storage.") : null,
         warnings.length ? h("div", {class: "ai-warn"}, h("ul", {class: "ai-log"}, warnings.map(w => h("li", {}, w)))) : null,
         cov?.length ? h("div", {class: "ai-preview"}, h("b", {}, "Coverage"), cov.map(cv => h("div", {},
                 `${covDim} = ${cv.label}: matches ${cv.matched} of ${cv.shapes} sibling shapes · ${cv.notes} notes (siblings average ${cv.siblingAvg.toFixed(1)})`,
@@ -627,8 +662,31 @@ function renderReview() {
 
 function accept() {
     if (!P.res) return;
-    const {changes, prov} = P.res;
+    const {changes, prov, base} = P.res;
     const chosen = changes.filter(c => c.on && c.type !== "view");
+    if (base) {
+        const D = clone(base);
+        applyChanges(D, chosen, {...prov, at: now()});
+        try {
+            assertInvariants(D);
+        } catch (e) {
+            return alert("Rejected: " + e.message);
+        }
+        const nv = chosen.find(c => c.type === "newView" && D.views.some(w => w.id === c.id));
+        if (nv) {
+            D.views = D.views.filter(w => w.name !== "Default" || w.rows.length || w.cols.length);
+            D.activeView = nv.id;
+        }
+        if (!D.views.length) D.views = clone(base.views);
+        if (!D.views.some(w => w.id === D.activeView)) D.activeView = D.views[0].id;
+        flush();
+        P.res = null;
+        close();
+        replaceDoc(D);
+        resetNav();
+        announce(`Imported “${D.title}”: ${D.items.length} notes, ${D.dimensions.length} dimensions. The previous notebook stays in browser storage.`);
+        return;
+    }
     const view = changes.find(c => c.on && c.type === "view");
     if (chosen.length) commit(D => applyChanges(D, chosen, {...prov, at: now()})); // one undo step
     if (view) setView(v => {
@@ -679,7 +737,7 @@ function renderSettings() {
         announce("Cognotik settings saved.");
         renderSetup();
     };
-    box().replaceChildren(
+    fill(
         head("✦ Cognotik account"),
         connBox(),
         h("h4", {}, "Model"),
@@ -712,7 +770,7 @@ function renderLog() {
     P.view = "log";
     P.refresh = null;
     const log = readLog().slice().reverse();
-    box().replaceChildren(
+    fill(
         head("✦ Run log"),
         h("p", {class: "muted"}, "Metadata only — prompt content is never recorded."),
         log.length ? h("ul", {class: "ai-log"}, log.map(e => h("li", {},

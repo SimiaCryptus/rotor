@@ -10,6 +10,6 @@ export function h(tag, attrs = {}, ...kids) {
         else if (k === "html") e.innerHTML = v; // only for renderMarkdown output
         else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
     }
-    for (const c of kids.flat()) if (c != null) e.append(c);
+    for (const c of kids.flat(Infinity)) if (c != null && c !== false) e.append(c);
     return e;
 }

@@ -128,6 +128,7 @@ export const AGENTS = {
         needsSource: p => p.mode === "ingest",
         scopes: p => p.mode === "match" ? ["doc"] : ["schema"],
         desc: "Fills your schema with notes — sample data, a brief, pasted text, or more like your notes.",
+         maxTokens: 12000,
         task: c => ({
                 sample: `Create about ${c.count || 20} realistic, varied sample notes about the topic for this schema.`,
                 brief: `Create notes that cover the brief (at most 40).`,
@@ -136,6 +137,14 @@ export const AGENTS = {
             }[c.mode] || "") +
             ` Place every note with "at": {dimension name: [value labels]} using existing values; if a genuinely needed value is missing, declare it in "newValues" first (at most 10 in total). Never use date dimensions in "at". Spread notes across the schema, using each value of each dimension at least once where the count allows. Keep notes short (1 to 3 sentences).`,
         schema: `{"newValues":[{"dimension":"Area","label":"Billing"}],"newItems":[{"content":"short note","at":{"Status":["Open"],"Area":["Billing"]}}]}`,
+    },
+    importer: {
+        name: "Importer", group: "generate", needsSource: true, fresh: true,
+        scopes: ["schema"], payload: {schema: true},
+         maxTokens: 16000,
+        desc: "Builds a whole new notebook from pasted text: dimensions, views and placed notes. Your current notebook is kept in browser storage.",
+        task: () => `Turn the source text into a complete new Rotor notebook. Propose a short "title"; 2 to 6 orthogonal dimensions that capture how the material is naturally organised (use "ordinal" where order matters, "categorical" otherwise; each with 1 to 30 short values and an optional short "note"); 1 to 5 useful views ("name", "rows", "cols" — dimension names, none on both — optional "filter" {dimension:[labels]}); and atomic notes (one idea each, at most 100) that preserve the source's wording, never adding facts not in the text. Place every note with "at": {dimension name: [value labels]} using only the values you declared.`,
+        schema: `{"title":"Meeting notes","newDimensions":[{"name":"Topic","kind":"categorical","values":[{"label":"Budget"}]},{"name":"Status","kind":"ordinal","values":[{"label":"Open"},{"label":"Done"}]}],"newViews":[{"name":"Board","rows":["Topic"],"cols":["Status"]}],"newItems":[{"content":"Budget review moved to Friday.","at":{"Topic":["Budget"],"Status":["Open"]}}]}`,
     },
 
     // ---------- Ask ----------

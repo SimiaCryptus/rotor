@@ -12,6 +12,7 @@ import {render} from "./render.js";
 import {announce} from "./status.js";
 import {openMenu} from "./contextmenu.js";
 import {startCellEdit, getActiveCellEditId} from "./milkdown.js";
+import {focusSideEditor} from "./editor.js";
 import {attachNote} from "./describe.js";
 import {openAgents} from "./agents-panel.js";
 import {
@@ -21,10 +22,16 @@ import {
 } from "./actions.js";
 
 const RENDER_CAP = 2000;
-// Create a note at an address and open it in the floating editor next to its new card.
+// Open a note in the side panel editor.
+function openInPanel(id) {
+      state.selectedId = id;
+      render();
+      focusSideEditor();
+}
+// Create a note at an address and open it in the side panel.
 function createAndEdit(addr) {
-     const id = createIn(addr); // renders synchronously
-     startCellEdit(id, document.querySelector(`.card[data-id="${CSS.escape(id)}"]`));
+      const id = createIn(addr); // selects + renders synchronously
+      focusSideEditor();
 }
 
 export function headerLabel(dims, tuple) {
@@ -318,17 +325,17 @@ function cellEl(v, r, c, placements, ri, ci) {
          });
          if (!locked && !item.enc) card.addEventListener("dblclick", e => {
              e.stopPropagation();
-             startCellEdit(item.id, card);
+              openInPanel(item.id);
          });
          if (!item.enc && !locked && mode !== "count") {
              const editBtn = h("button", {
                  type: "button",
                  class: "card-edit-btn",
-                  title: "Edit in the floating editor (Enter)",
+                   title: "Edit note (Enter)",
                  "aria-label": "Edit note",
                  onclick: (e) => {
                      e.stopPropagation();
-                     startCellEdit(item.id, card);
+                      openInPanel(item.id);
                  }
              }, "✎");
              card.append(editBtn);
@@ -364,7 +371,7 @@ function cellEl(v, r, c, placements, ri, ci) {
                 if (locked) {
                     unlock(item.id);
                 } else if (!item.enc) {
-                    startCellEdit(item.id, card);
+                     openInPanel(item.id);
                     return;
                 }
                 state.selectedId = item.id;
