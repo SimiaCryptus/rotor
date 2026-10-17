@@ -1,6 +1,7 @@
 // Entry point. pristine.js MUST be the first import: it snapshots the page source
 // before any module touches the DOM (§9.2). No other module has import-time side effects.
 import "./pristine.js";
+import {applyTheme} from "../styles/themes.js";
 import {initStorage} from "./storage.js";
 import {initToolbar} from "./ui/toolbar.js";
 import {initMenubar} from "./ui/menubar.js";
@@ -14,6 +15,7 @@ import {initDrive} from "./drive/index.js";
 import {initPwa} from "./pwa.js";
 
 initStorage();
+applyTheme();
 initToolbar();
 initMenubar();
 initPalette();

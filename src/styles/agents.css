@@ -78,7 +78,7 @@ button:disabled { opacity: .5; cursor: not-allowed }
 .ai-detail textarea { width: 100%; font-family: var(--mono); font-size: 12px; margin-top: 4px; resize: vertical }
 .ai-diff { white-space: pre-wrap; font-size: 12.5px; margin-bottom: 4px }
 
-ins { background: color-mix(in oklab, #2fe6b7 28%, transparent); text-decoration: underline }
+ins { background: color-mix(in oklab, var(--color-accent-mint) 28%, transparent); text-decoration: underline }
 del { background: color-mix(in oklab, var(--danger) 18%, transparent) }
 
 .ai-log { padding-left: 18px; font-size: 12px }
@@ -92,11 +92,11 @@ del { background: color-mix(in oklab, var(--danger) 18%, transparent) }
     border-radius: 12px;
     font-size: 12.5px
 }
-.ai-conn.ok { border-color: color-mix(in oklab, #2fe6b7 55%, var(--line2)) }
+.ai-conn.ok { border-color: color-mix(in oklab, var(--color-accent-mint) 55%, var(--line2)) }
 .ai-conn.auth, .ai-conn.error { background: color-mix(in oklab, var(--acc) 7%, transparent) }
 .ai-conn .muted { margin-top: 4px }
 .ai-conn button { padding: 2px 9px; font-size: 12px }
-.ai-ok { color: color-mix(in oklab, #2fe6b7 70%, var(--fg)); font-weight: 650 }
+.ai-ok { color: color-mix(in oklab, var(--color-accent-mint) 70%, var(--fg)); font-weight: 650 }
 .ai-model { flex: 1; display: flex; gap: 6px; min-width: 0 }
 .ai-model select { flex: 1; min-width: 0 }
 #aiModel { flex: 1; display: flex; min-width: 0 }

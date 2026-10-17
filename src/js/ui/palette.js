@@ -17,6 +17,7 @@ import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive}
 import {startCellEdit} from "./milkdown.js";
 import {transpose, renameView, deleteActiveView, addDimPrompt, importPrompt} from "./toolbar.js";
 import {exportJSON} from "../io.js";
+import {THEMES, setTheme} from "../../styles/themes.js";
 const driveCmd = fn => driveAvailable() ? fn()
      : announce("Google Drive is available in the Drive build (dist/drive) served over HTTPS.");
 const unq = s => (s || "").trim().replace(/^"|"$/g, "");
@@ -89,6 +90,13 @@ const COMMANDS = [
         if (["created", "modified", "alpha"].includes(s)) setView(w => w.options.sort = s);
         else announce("Sort must be created, modified or alpha");
     }],
+     ["theme", "theme <auto|light|dark> — switch colour theme", a => {
+         const t = (a || "").trim().toLowerCase() || "auto";
+         const match = THEMES.find(x => x.id === t);
+         if (!match) return announce("Theme must be " + THEMES.map(x => x.id).join(", "));
+         setTheme(match.id);
+         announce("Theme: " + match.label);
+     }],
     ["back", "Previous view state (Alt+←)", () => navGo(-1)],
     ["forward", "Next view state (Alt+→)", () => navGo(1)],
     ["undo", "Undo", () => undo()],

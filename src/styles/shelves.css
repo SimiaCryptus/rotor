@@ -113,7 +113,7 @@
      background: var(--solid);
      white-space: nowrap
 }
-.ftok.include { border-color: color-mix(in oklab, #2fe6b7 65%, var(--line2)) }
+.ftok.include { border-color: color-mix(in oklab, var(--color-accent-mint) 65%, var(--line2)) }
 .ftok.exclude { border-color: color-mix(in oklab, var(--danger) 60%, var(--line2)) }
 .ftok.exclude .ftok-v { text-decoration: line-through }
 .ftok-x, .chip-x {

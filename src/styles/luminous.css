@@ -7,17 +7,21 @@
 @property --py { syntax: "<length>"; initial-value: -2000px; inherits: false }
 
 :root {
-    --spectrum: var(--acc), var(--acc2), #2fe6b7, #ffc861, var(--acc3), var(--acc);
+     --spectrum: var(--acc), var(--acc2), var(--color-accent-mint), var(--color-accent-gold), var(--acc3), var(--acc);
     --flow: linear-gradient(90deg, var(--acc) 0%, var(--acc2) 16.66%, var(--acc3) 33.33%, var(--acc) 50%, var(--acc2) 66.66%, var(--acc3) 83.33%, var(--acc) 100%);
     --edge: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 0 0 1px rgba(255, 255, 255, .18);
     --glow: 0 0 0 1px color-mix(in oklab, var(--acc) 18%, transparent), 0 18px 48px -18px color-mix(in oklab, var(--acc) 55%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+     :root:not([data-theme="light"]) {
         --edge: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 0 0 1px rgba(255, 255, 255, .035);
         --glow: 0 0 0 1px color-mix(in oklab, var(--acc) 22%, transparent), 0 24px 64px -18px color-mix(in oklab, var(--acc) 50%, transparent);
     }
+}
+[data-theme="dark"] {
+     --edge: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 0 0 1px rgba(255, 255, 255, .035);
+     --glow: 0 0 0 1px color-mix(in oklab, var(--acc) 22%, transparent), 0 24px 64px -18px color-mix(in oklab, var(--acc) 50%, transparent);
 }
 
 @keyframes rotateAng { to { --ang: 360deg } }
@@ -42,7 +46,7 @@ body::before {
         radial-gradient(40vmax 40vmax at 12% 16%, color-mix(in oklab, var(--acc) 30%, transparent), transparent 62%),
         radial-gradient(34vmax 34vmax at 88% 10%, color-mix(in oklab, var(--acc2) 26%, transparent), transparent 62%),
         radial-gradient(46vmax 46vmax at 74% 94%, color-mix(in oklab, var(--acc3) 20%, transparent), transparent 62%),
-        radial-gradient(28vmax 28vmax at 28% 86%, color-mix(in oklab, #2fe6b7 12%, transparent), transparent 62%),
+         radial-gradient(28vmax 28vmax at 28% 86%, color-mix(in oklab, var(--color-accent-mint) 12%, transparent), transparent 62%),
         conic-gradient(from 210deg at 50% 50%, transparent, color-mix(in oklab, var(--acc) 6%, transparent), transparent 40%);
     animation: aurora 40s ease-in-out infinite alternate, hue 26s ease-in-out infinite alternate;
 }

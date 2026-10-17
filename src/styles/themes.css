@@ -1,0 +1,123 @@
+/* Point-CAD theme — 10 colours, themes: light, dark, valentines, stPatricks, independenceDay, halloween, thanksgiving, christmas */
+:root {
+    --color-canvas: oklch(97.11% 0.00805 278.64);
+    --color-brand: oklch(58.493% 0.2322 280.29);
+    --color-accent-cyan: oklch(73.459% 0.15887 236.36);
+    --color-accent-pink: oklch(69.371% 0.22137 356.75);
+    --color-surface-1: oklch(100% 0 89.88);
+    --color-text: oklch(22.302% 0.03796 271.81);
+    --color-text-muted: oklch(55.229% 0.05361 275.47);
+    --color-danger: oklch(62.557% 0.19334 23.03);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-canvas: oklch(13.122% 0.01647 276.19);
+        --color-brand: oklch(67.973% 0.17634 284.74);
+        --color-accent-cyan: oklch(80.822% 0.13535 222.42);
+        --color-accent-pink: oklch(73.939% 0.19409 348.42);
+        --color-surface-1: oklch(20.841% 0.03985 275.91);
+        --color-text: oklch(94.234% 0.0176 279.05);
+        --color-text-muted: oklch(66.089% 0.05244 277.26);
+        --color-danger: oklch(70.135% 0.19013 21.2);
+        --color-accent-mint: oklch(82.692% 0.15491 170.07);
+        --color-accent-gold: oklch(86.249% 0.13495 80.96);
+    }
+}
+[data-theme="light"] {
+    --color-canvas: oklch(97.11% 0.00805 278.64);
+    --color-brand: oklch(58.493% 0.2322 280.29);
+    --color-accent-cyan: oklch(73.459% 0.15887 236.36);
+    --color-accent-pink: oklch(69.371% 0.22137 356.75);
+    --color-surface-1: oklch(100% 0 89.88);
+    --color-text: oklch(22.302% 0.03796 271.81);
+    --color-text-muted: oklch(55.229% 0.05361 275.47);
+    --color-danger: oklch(62.557% 0.19334 23.03);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="dark"] {
+    --color-canvas: oklch(13.122% 0.01647 276.19);
+    --color-brand: oklch(67.973% 0.17634 284.74);
+    --color-accent-cyan: oklch(80.822% 0.13535 222.42);
+    --color-accent-pink: oklch(73.939% 0.19409 348.42);
+    --color-surface-1: oklch(20.841% 0.03985 275.91);
+    --color-text: oklch(94.234% 0.0176 279.05);
+    --color-text-muted: oklch(66.089% 0.05244 277.26);
+    --color-danger: oklch(70.135% 0.19013 21.2);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="valentines"] {
+    --color-canvas: oklch(97.847% 0.01102 3.49);
+    --color-brand: oklch(58.584% 0.22204 17.58);
+    --color-accent-cyan: oklch(71.919% 0.16898 13.43);
+    --color-accent-pink: oklch(64.503% 0.2154 16.44);
+    --color-surface-1: oklch(100% 0 89.88);
+    --color-text: oklch(20.962% 0.05835 6.09);
+    --color-text-muted: oklch(50.331% 0.08006 2.58);
+    --color-danger: oklch(57.71% 0.21516 27.33);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="stPatricks"] {
+    --color-canvas: oklch(97.969% 0.01233 157.01);
+    --color-brand: oklch(52.73% 0.1371 150.07);
+    --color-accent-cyan: oklch(69.587% 0.14907 162.48);
+    --color-accent-pink: oklch(79.524% 0.16167 86.05);
+    --color-surface-1: oklch(100% 0 89.88);
+    --color-text: oklch(24.077% 0.04899 153.26);
+    --color-text-muted: oklch(52.333% 0.06358 155.35);
+    --color-danger: oklch(62.557% 0.19334 23.03);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="independenceDay"] {
+    --color-canvas: oklch(97.305% 0.007 268.55);
+    --color-brand: oklch(48.82% 0.21717 264.38);
+    --color-accent-cyan: oklch(58.762% 0.13887 241.97);
+    --color-accent-pink: oklch(57.71% 0.21516 27.33);
+    --color-surface-1: oklch(100% 0 89.88);
+    --color-text: oklch(20.768% 0.03982 265.75);
+    --color-text-muted: oklch(49.818% 0.05404 262.21);
+    --color-danger: oklch(57.71% 0.21516 27.33);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="halloween"] {
+    --color-canvas: oklch(13.122% 0.01754 305.61);
+    --color-brand: oklch(70.223% 0.20044 45.1);
+    --color-accent-cyan: oklch(62.685% 0.23254 303.9);
+    --color-accent-pink: oklch(76.814% 0.2044 130.85);
+    --color-surface-1: oklch(19.565% 0.0381 297.3);
+    --color-text: oklch(95.86% 0.01998 308.23);
+    --color-text-muted: oklch(66.386% 0.07156 302.98);
+    --color-danger: oklch(66.892% 0.21892 20.91);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="thanksgiving"] {
+    --color-canvas: oklch(97.729% 0.01021 81.8);
+    --color-brand: oklch(55.528% 0.14551 49);
+    --color-accent-cyan: oklch(66.584% 0.15742 58.32);
+    --color-accent-pink: oklch(44.369% 0.16132 26.9);
+    --color-surface-1: oklch(99.447% 0.00569 84.57);
+    --color-text: oklch(23.237% 0.04168 57.53);
+    --color-text-muted: oklch(51.624% 0.04713 61.72);
+    --color-danger: oklch(57.71% 0.21516 27.33);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}
+[data-theme="christmas"] {
+    --color-canvas: oklch(15.93% 0.02175 160.82);
+    --color-brand: oklch(63.683% 0.20785 25.33);
+    --color-accent-cyan: oklch(72.275% 0.19201 149.58);
+    --color-accent-pink: oklch(79.524% 0.16167 86.05);
+    --color-surface-1: oklch(23.842% 0.03592 157.16);
+    --color-text: oklch(96.624% 0.01893 157.88);
+    --color-text-muted: oklch(69.505% 0.05684 157.14);
+    --color-danger: oklch(69.095% 0.19869 23.91);
+    --color-accent-mint: oklch(82.692% 0.15491 170.07);
+    --color-accent-gold: oklch(86.249% 0.13495 80.96);
+}

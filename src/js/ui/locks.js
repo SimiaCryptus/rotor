@@ -18,10 +18,10 @@ function calcEntropy(p) {
      if (/[^a-zA-Z0-9]/.test(p)) pool += 33;
      const bits = pool > 0 ? Math.round(p.length * Math.log2(pool)) : 0;
      let label = "Very weak", color = "var(--danger)";
-     if (bits >= 80) { label = "Very strong"; color = "#2fe6b7"; }
+      if (bits >= 80) { label = "Very strong"; color = "var(--color-accent-mint)"; }
      else if (bits >= 60) { label = "Strong"; color = "var(--acc2)"; }
      else if (bits >= 36) { label = "Fair"; color = "var(--acc)"; }
-     else if (bits >= 28) { label = "Weak"; color = "#ffc861"; }
+      else if (bits >= 28) { label = "Weak"; color = "var(--color-accent-gold)"; }
      return {bits, pool, label, color};
 }
 
@@ -145,7 +145,7 @@ export function askPassword({title, confirm: twice = false, hint = "", action = 
                          bruteRunning = false;
                          bruteBtn.textContent = "⚡ Brute force";
                          bruteStatus.textContent = `✓ Found "${candidate}" in ${attempts} attempts (${elapsed.toFixed(1)}s)!`;
-                         bruteStatus.style.color = "#2fe6b7";
+                          bruteStatus.style.color = "var(--color-accent-mint)";
                          await new Promise(r => setTimeout(r, 400));
                          done(candidate);
                          return;

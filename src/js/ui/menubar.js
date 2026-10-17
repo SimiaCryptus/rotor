@@ -18,6 +18,7 @@ import {focusSideEditor} from "./editor.js";
 import {render} from "./render.js";
 import {moveDim, renameDim, deleteDim, deleteItem, clearAllFilters, editDimNote} from "./actions.js";
 import {AGENTS} from "../ai/agents.js";
+import {THEMES, getTheme, setTheme} from "../../styles/themes.js";
 import {
     transpose, newViewPrompt, renameView, deleteActiveView, addDimPrompt,
     importPrompt, startEmpty, renameTitle
@@ -83,6 +84,12 @@ function viewMenu() {
             }))},
         {label: "Sort within cells", submenu: () => [["created", "Oldest first"], ["modified", "Recently modified"], ["alpha", "A–Z"]]
                 .map(([k, l]) => ({label: l, checked: (o.sort || "created") === k, action: () => setView(w => w.options.sort = k)}))},
+         {label: "Theme", submenu: () => {
+                 const cur = getTheme();
+                 return THEMES.map(t => ({
+                     label: t.label, checked: cur === t.id, action: () => setTheme(t.id)
+                 }));
+             }},
         {label: "Clear all filters", action: clearAllFilters},
         "-",
         {label: "Saved views", submenu: () => [
