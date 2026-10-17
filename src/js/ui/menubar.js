@@ -12,7 +12,7 @@ import {
 import {openMenuAt, closeMenu, menuAnchor} from "./contextmenu.js";
 import {palOpen} from "./palette.js";
 import {openAgents, openAgentSettings, openAgentLog} from "./agents-panel.js";
-import {encryptScope, unlockPrompt, lockAll} from "./locks.js";
+import {encryptScope, unlockPrompt, lockAll, exportRecoveryScript} from "./locks.js";
 import {startCellEdit, flushCellEdit} from "./milkdown.js";
 import {focusSideEditor} from "./editor.js";
 import {render} from "./render.js";
@@ -66,6 +66,10 @@ function editMenu() {
         {label: "Encrypt selected note / cell…", action: () => encryptScope("")},
         {label: "Unlock encrypted notes…", action: unlockPrompt},
         {label: "Lock all encrypted notes", action: lockAll},
+         {label: "Export password recovery script (.mjs)…",
+             hint: "Download a self-contained Node.js brute-force script with only the encrypted payload(s)",
+             disabled: !state.doc.items.some(i => i.enc),
+             action: () => exportRecoveryScript(sel?.enc ? [sel] : state.doc.items.filter(i => i.enc))},
     ];
 }
 

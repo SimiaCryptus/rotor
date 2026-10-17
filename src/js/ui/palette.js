@@ -12,7 +12,7 @@ import {announce, status} from "./status.js";
 import {addDim, newView, moveDim, deleteDim, setKind, filterHide, clearAllFilters} from "./actions.js";
 import {openAgents, openAgentSettings, openAgentLog, signInToCognotik} from "./agents-panel.js";
 import {setModel} from "../ai/cognotik.js";
-import {encryptScope, unlockPrompt, lockAll, removeEncryption} from "./locks.js";
+import {encryptScope, unlockPrompt, lockAll, removeEncryption, exportRecoveryScript} from "./locks.js";
 import {driveAvailable, openFromDrive, saveToDrive, createInDrive, signOutDrive} from "../drive/index.js";
 import {startCellEdit} from "./milkdown.js";
 import {transpose, renameView, deleteActiveView, addDimPrompt, importPrompt} from "./toolbar.js";
@@ -136,6 +136,10 @@ const COMMANDS = [
      ["lock", "Forget all passwords and re-lock decrypted notes", () => lockAll()],
      ["decrypt", "Remove encryption from the selected, unlocked note", () =>
          state.selectedId ? removeEncryption(state.selectedId) : announce("Select a note first.")],
+      ["recover", "Export a standalone Node.js brute-force script (.mjs) for encrypted note(s)", () => {
+          const sel = state.doc.items.find(i => i.id === state.selectedId);
+          exportRecoveryScript(sel?.enc ? [sel] : state.doc.items.filter(i => i.enc));
+      }],
       ["edit", "Edit the selected note in the floating, dockable editor", () => {
          if (!state.selectedId) return announce("Select a note first.");
          const card = document.querySelector(`.card[data-id="${CSS.escape(state.selectedId)}"]`);

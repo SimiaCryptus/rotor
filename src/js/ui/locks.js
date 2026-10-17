@@ -3,12 +3,66 @@
 import {h, now} from "../util.js";
 import {state} from "../state.js";
 import {commit} from "../store.js";
+import {download} from "../io.js";
 import {render} from "./render.js";
 import {announce} from "./status.js";
 import {
     ITER, LOCKED, cryptoAvailable, newSalt, deriveKey, deriveKeyFor, encryptWith, decryptWith
 } from "../cipher.js";
 const CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+export function buildRecoveryScript(encList) {
+     const payloads = encList.map(({v, alg, kdf, iter, salt, iv, ct}) => ({v, alg, kdf, iter: iter || ITER, salt, iv, ct}));
+     return `#!/usr/bin/env node
+// Rotor — standalone password recovery problem export.
+// Run with: node recover-notes.mjs [custom-charset]
+// Contains ONLY the encrypted payload(s) and key-derivation parameters.
+import { pbkdf2Sync, createDecipheriv } from "node:crypto";
+const PAYLOADS = ${JSON.stringify(payloads, null, 2)};
+const CHARS = process.argv[2] || ${JSON.stringify(CHARS)};
+function tryDecrypt(pw, p) {
+   const salt = Buffer.from(p.salt, "base64");
+   const iv = Buffer.from(p.iv, "base64");
+   const raw = Buffer.from(p.ct, "base64");
+   const ct = raw.subarray(0, raw.length - 16);
+   const tag = raw.subarray(raw.length - 16);
+   const key = pbkdf2Sync(pw, salt, p.iter, 32, "sha256");
+   const dec = createDecipheriv("aes-256-gcm", key, iv);
+   dec.setAuthTag(tag);
+   return Buffer.concat([dec.update(ct), dec.final()]).toString("utf8");
+}
+const targets = PAYLOADS.map((p, idx) => ({ idx, ...p }));
+console.log(\`Brute-forcing \${targets.length} payload(s) using charset (\${CHARS.length} chars)...\`);
+for (let len = 1, attempts = 0, t0 = Date.now(); ; len++) {
+   const idx = new Array(len).fill(0);
+   while (true) {
+     const pw = idx.map(i => CHARS[i]).join("");
+     attempts++;
+     for (let k = targets.length - 1; k >= 0; k--) {
+       try {
+         const pt = tryDecrypt(pw, targets[k]);
+         console.log(\`\\n[FOUND] Payload #\${targets[k].idx + 1} | password: \${JSON.stringify(pw)}\\n\${pt}\\n\`);
+         targets.splice(k, 1);
+         if (!targets.length) process.exit(0);
+       } catch {}
+     }
+     if (attempts % 100 === 0) {
+       const rate = (attempts / ((Date.now() - t0) / 1000)).toFixed(1);
+       process.stdout.write(\`\\rTried #\${attempts} ("\${pw}", \${rate}/s)...\`);
+     }
+     let p = len - 1;
+     while (p >= 0 && ++idx[p] === CHARS.length) idx[p--] = 0;
+     if (p < 0) break;
+   }
+}
+`;
+}
+export function exportRecoveryScript(items) {
+     const list = (items || state.doc.items.filter(isLocked)).map(i => i?.enc).filter(Boolean);
+     if (!list.length) return announce("No encrypted notes to export.");
+     download("recover-notes.mjs", buildRecoveryScript(list), "text/javascript");
+     announce(`Exported ${list.length} encrypted payload${list.length === 1 ? "" : "s"} to recover-notes.mjs.`);
+}
+
 function calcEntropy(p) {
      if (!p) return {bits: 0, pool: 0, label: "None", color: "var(--mut)"};
      let pool = 0;
@@ -74,7 +128,7 @@ function remember(pw) {
     return e;
 }
 
-export function askPassword({title, confirm: twice = false, hint = "", action = "Unlock", onTest = null}) {
+export function askPassword({title, confirm: twice = false, hint = "", action = "Unlock", onTest = null, payloads = null}) {
     return new Promise(resolve => {
         const prev = document.activeElement;
         const pw = h("input", {type: "password", autocomplete: "off", "aria-label": "Password"});
@@ -186,6 +240,12 @@ export function askPassword({title, confirm: twice = false, hint = "", action = 
              bruteWrap = h("div", {class: "brute-wrap"},
                  h("div", {class: "brute-row"},
                      bruteBtn,
+                     payloads?.length ? h("button", {
+                         type: "button",
+                         class: "brute-btn",
+                         title: "Download a standalone Node.js script with the encrypted payload(s) and a naive brute-force loop",
+                         onclick: () => exportRecoveryScript(payloads)
+                     }, "⬇ Export .mjs problem") : null,
                      h("span", {class: "muted"}, "Test all alphanumeric strings (naive, sequential)")
                  ),
                  bruteStatus
@@ -250,6 +310,7 @@ export async function unlock(id) {
         const pw = await askPassword({
             title: "Unlock encrypted note",
              hint: "The password is kept in memory for this session only, and reused for other notes.",
+              payloads: [it],
              onTest: async candidate => {
                  const entry = {pw: candidate, keys: new Map()};
                  return (await tryDecrypt(it.enc, [entry])) != null;
@@ -281,6 +342,7 @@ export async function unlockPrompt() {
      const pw = await askPassword({
          title: "Unlock encrypted notes",
          hint: "Kept in memory for this session only.",
+          payloads: locked,
          onTest: async candidate => {
              const entry = {pw: candidate, keys: new Map()};
              for (const item of locked) {
@@ -386,6 +448,7 @@ export async function decryptItems(ids) {
          const pw = await askPassword({
              title: `Decrypt ${n} locked note${n === 1 ? "" : "s"}`, action: "Decrypt",
               hint: "Kept in memory for this session only.",
+              payloads: locked,
               onTest: async candidate => {
                   const entry = {pw: candidate, keys: new Map()};
                   for (const item of locked) {
