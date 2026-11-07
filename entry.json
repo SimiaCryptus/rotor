@@ -1,7 +1,17 @@
 {
     "id": "rotor",
     "title": "Rotor",
-    "pitch": "A single-file notebook where notes live in a multi-dimensional space, and you rotate which two dimensions you look at.",
+    "description": "A single-file notebook where notes live in a multi-dimensional cube: rotate which dimensions you see as rows, columns and filters, edit directly inside any view, and optionally let AI agents propose changes for you to review.",
+    "tags": [
+        "notebook",
+        "notes",
+        "single-file",
+        "offline",
+        "pwa",
+        "google-drive",
+        "ai-agents",
+        "markdown"
+    ],
     "category": "tool",
     "href": "https://rotor.cognotik.com/",
     "readme": "README.md",
