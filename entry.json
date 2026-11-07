@@ -1,7 +1,7 @@
 {
     "id": "rotor",
     "title": "Rotor",
-    "description": "A single-file notebook where notes live in a multi-dimensional cube: rotate which dimensions you see as rows, columns and filters, edit directly inside any view, and optionally let AI agents propose changes for you to review.",
+    "pitch": "A single-file notebook where notes live in a multi-dimensional cube: rotate which dimensions you see as rows, columns and filters, edit directly inside any view, and optionally let AI agents propose changes for you to review.",
     "tags": [
         "notebook",
         "notes",

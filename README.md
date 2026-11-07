@@ -1,103 +1,47 @@
 # Rotor
 
-Modular source for Rotor, compiled into self-contained HTML files:
+**A notebook you can turn in your hands.**
 
-- `dist/rotor.html` is the standalone single-file utility. It works from `file://` and needs no server.
-- `dist/drive/index.html` is the Google Drive app. It does everything the standalone file does, and also:
-  - opens notebooks from Drive (Drive's "Open with ▸ Rotor", or the in-app Picker);
-  - creates new notebooks from Drive's "New ▸ More ▸ Rotor";
-  - autosaves back to the Drive file.
+Rotor is a note-taking tool built on one simple idea. Your notes have more than one shape, so you should be able to look at them from more than one side.
 
-Build commands:
+It comes as a single file you open in your web browser. You don't install anything, create an account or need an internet connection. You write your notes once. Then you *rotate* them to see the same notes arranged by topic, by project, by status, by week, or by any combination. You can keep writing and rearranging in whichever arrangement you happen to be looking at.
 
-    npm install
-    npm run build        # → both files (minified)
-    npm run build:debug  # → both files (readable)
-    npm run dev          # rebuild on every change in src/
-## Documentation
-Detailed documentation lives in [`doc/`](doc/README.md):
-- [Features](doc/features.md): a tour of everything Rotor can do
-- [Data model](doc/model.md) and [Views & projection](doc/views.md)
-- [Agents](doc/agents.md) and [Encryption](doc/crypto.md)
-- [Storage & files](doc/storage.md), [Google Drive](doc/drive.md) and [PWA](doc/pwa.md)
-- [Shortcuts & commands](doc/shortcuts.md), [Security & privacy](doc/security.md) and [Architecture](doc/architecture.md)
+> *Rotor is a working title for an evolving project. This page describes the design as a whole. Some parts described here, especially the optional AI helpers, are planned rather than finished.*
 
+---
 
-## How the build works
+## The problem with where notes live
 
-`build.mjs` bundles `src/js/main.js` (as an IIFE) and `src/styles/index.css` with esbuild. It does this once per target. A build-time flag (`__DRIVE__`) switches the Drive code paths on or off. The bundles are injected into the `/*@rotor:css*/`, `/*@rotor:js*/` and `@rotor:csp` slots of `src/index.html`.
+Think about any single note you've taken. "Ask Dana about the budget before Friday" is about money. It belongs to a project and involves a person. It has a deadline, and it's either done or not done.
 
-The build enforces these constraints, because the app's "Save HTML" depends on them:
+That one thought has at least five "addresses." Almost every note-taking tool makes you pick one:
 
-- `src/js/pristine.js` must be the **first** import in `main.js`. It snapshots `document.documentElement.outerHTML` before anything touches the DOM.
-- `<script type="application/json" id="rotor-data"></script>` must appear before the app script.
-- App code is inline. The Content Security Policy is generated per target:
-  - **standalone:** only Cognotik (`*.cognotik.com`, or `localhost` for a self-hosted server) is reachable;
-  - **Drive build:** additionally `accounts.google.com/gsi`, `apis.google.com` (Picker) and `www.googleapis.com` (Drive API).
-- CSS cascade order is the `@import` order in `styles/index.css`. `luminous.css` must stay last.
+- **Folders** make you choose the one folder it goes in.
+- **Outlines and pages** make you choose the one page it lives on.
+- **Linked-note tools** make it a dot in a web of links.
+- **Database-style tools** make it a row in a table whose columns were decided in advance.
 
-## Agents (Cognotik)
+Everything else gets demoted to tags and filters. Tags and filters help you *find* a note again. They don't let you *see your whole collection differently*. You can search for everything tagged "budget." You can't easily stand back and look at all your notes laid out as *projects down the side, people across the top*. Then, a moment later, you can't swap that for *weeks down the side, status across the top* without building a separate report that goes stale.
 
-Agents run through the Cognotik hosted API proxy. The protocol is not duplicated: `src/js/ai/` imports `cognotik-example/cognotik-client.mjs` and esbuild bundles it.
+## The idea: notes as a cube
 
-- **Connect:** open *Agents ▸ Account* and click **Sign in to Cognotik**. A Cognotik window opens. Rotor detects the session as soon as you are signed in.
-- **API key (optional):** paste a Cognotik API key (sent as `X-API-Key`) if your browser blocks third-party cookies, or when running from `file://`.
-- **Models:** model dropdowns are filled from `/api-proxy/models/{providers}` and grouped by upstream provider. Use the palette (`/ai model <id>`) or the dropdown on the agents screen to switch.
-- **Server:** a self-hosted Cognotik on `localhost` works too (*Advanced ▸ Server*).
-- For cookie sign-in from another origin, the Cognotik server must answer CORS with `Access-Control-Allow-Credentials: true` for Rotor's origin. Its session cookie must also be `SameSite=None; Secure`.
+Rotor treats your notebook as a **cube** rather than a stack of pages.
 
-## Google Drive app
+- Each **note** is a piece of writing: a thought, a task, a quote, a fragment.
+- Each **dimension** is a way of sorting notes. *Topic*, *Project*, *Status*, *Person* and *Week* are all dimensions.
+- Each dimension has **values**. The *Status* dimension might have the values *Open*, *In progress* and *Done*.
+- Every note has a position along each dimension. A note can sit in more than one place on a dimension, because a note can be about two topics at once. It can also sit nowhere on a dimension, because not everything needs a status.
 
-### How it stores notebooks
+You then choose which dimensions to lay out as **rows** and which as **columns**. You can also choose some to use as **filters** that narrow what you see. The result looks like a grid. Each square holds the notes that sit at that crossing, such as all the *AI* notes that are *Open*.
 
-- **File format.** A notebook is a Drive file named `Title.rotor` with MIME type `application/vnd.rotor+json`. Its content is exactly the `rotor/1` JSON produced by "Export JSON". Older `.rotor.html` files can be opened too; they are saved back as HTML.
-- **Permissions.** Rotor uses only the `drive.file` scope. It can access only the files you open or create with it.
-- **Sign-in.** It uses a Google Identity Services popup. The access token is kept **in memory only** and never written anywhere.
-- **Autosave.** Changes are written to Drive about 2.5 s after you stop editing, and when the tab is hidden.
-- **Conflicts.** If the file changed in Drive meanwhile, Rotor asks before overwriting. The version you discard is kept as a snapshot (`/snapshots`).
-- **Browser working copy.** A copy is still kept in browser storage. If it is newer than the Drive file when you reopen it, Rotor offers to continue it.
-- **Encrypted notes** stay encrypted in Drive. Passwords and plaintext never leave memory.
+That arrangement is called a **view**, and changing it is called **rotation**. Drag *Status* from the columns onto the rows and drag *Project* into the columns, and your notes rearrange themselves. They are the same notes, seen from a different side.
 
-### One-time Google Cloud setup
+The principle at the heart of Rotor is:
 
-1. **Create the project.** Create (or pick) a Google Cloud project. Enable the **Google Drive API** and the **Google Picker API**.
-2. **Configure the consent screen.** Add the scope `https://www.googleapis.com/auth/drive.file`.
-3. **Create an OAuth client.** Use *Credentials → Create OAuth client ID → Web application*.
-    - Under **Authorized JavaScript origins**, add the origin that will serve `dist/drive/`. Examples: `https://notes.example.com`, or `http://localhost:8080` for testing.
-4. **Create an API key.** Use *Credentials → Create API key*. Restrict it to the Picker API and to your origin.
-5. **Configure the Drive UI integration.** Open *Google Drive API → Drive UI integration* and set:
-    - **Open URL:** `https://notes.example.com/rotor/` (wherever `index.html` is served). Drive appends `?state=…` itself.
-    - **Default MIME types:** `application/vnd.rotor+json`
-    - **Secondary MIME types:** `application/json`
-    - **Default file extensions:** `rotor`
-    - **Creating files:** enabled. **New URL:** the same URL as the Open URL.
-    - Icons as required. Turn on *Importing* if you want "Open with" for `.json`.
-6. **Make the app appear in users' Drive menus.** Users must install the app from the **Google Workspace Marketplace**. Configure the *Google Workspace Marketplace SDK* with the Drive extension. A private or unlisted listing is fine for a single organisation.
+> **The cube is the truth; every view is a projection, and every projection is writable.**
 
-### Build and deploy
+Put plainly, there's only one copy of your notes. Views are just ways of standing in front of them. You can edit directly from any view, and your changes are meaningful in every other view.
 
-    GOOGLE_CLIENT_ID=1234-abc.apps.googleusercontent.com \
-    GOOGLE_API_KEY=AIza... \
-    GOOGLE_APP_ID=123456789012 \
-    npm run build
-    # or keep them in .env and run: node --env-file=.env build.mjs
+## What it looks like
 
-`GOOGLE_APP_ID` is the Cloud **project number**. The Picker uses it to grant `drive.file` access to picked files.
-
-Upload `dist/drive/index.html` to any static HTTPS host, at the Open URL configured above. For a local test, run `npm run serve:drive` and open `http://localhost:8080/`.
-`dist/drive/` is a complete static site: `index.html`, `manifest.webmanifest`, `sw.js` and the icons. Upload the whole folder, for example to GitHub Pages, Netlify or an S3 bucket. The Open URL and New URL must point at that folder, e.g. `https://notes.example.com/rotor/`. No server code is involved: Drive opens the page with `?state={"action":"open","ids":[…]}`, and Rotor reads and writes the file directly through the Drive API using your `drive.file` token.
-Notes for static hosting:
-- Don't send `Cross-Origin-Opener-Policy: same-origin`. Use none, or `same-origin-allow-popups`, or the Google sign-in popup can't report back.
-- Uploaded `.rotor` files usually have type `application/octet-stream`. They still show **Open with ▸ Rotor** because the integration matches the `rotor` extension.
-
-### Using it
-
-- **From Drive:** right-click a `.rotor` file and choose *Open with ▸ Rotor*, or use *New ▸ More ▸ Rotor*. Rotor shows a "Connect Google Drive" banner. One click opens the Google sign-in popup, then the file.
-- **In the app:**
-    - **Open from Drive** shows the Picker.
-    - **Save to Drive** saves to the linked file, or creates one in My Drive if there isn't one.
-    - `Ctrl/Cmd+S` also saves to Drive.
-- **Palette commands:** `/drive open`, `/drive save`, `/drive new`, `/drive signout`.
-- **Unlinking:** "Import" and "Start empty" unlink the notebook from its Drive file. Nothing is overwritten.
-- **Read-only files:** "Save to Drive" offers to save a copy.
-- **Offline copies:** "Save HTML" still downloads a standalone self-contained copy. Drive features are inert when that copy is opened from `file://`.
+The screen is mostly a grid, with a few controls around the edges:
